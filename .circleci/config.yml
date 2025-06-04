@@ -1,0 +1,131 @@
+## reqresp-lib
+##
+## Purpose: This file defines the CircleCI configuration file used to automate
+## the build, publication and release of this project.
+
+## CircleCI configuration version
+version: 2.1
+
+################################################################################
+######################  executors  #############################################
+################################################################################
+
+## Executors are used to define common executors to be reused by multiple jobs.
+executors:
+  docker_executor:
+    docker:
+      - image: cimg/openjdk:17.0.7
+
+################################################################################
+######################  commands  ##############################################
+################################################################################
+
+## Commands are used to share the same steps across multiple jobs.
+commands:
+
+  ######################  troubleshoot_command  ###############################
+  troubleshoot_command:
+    steps:
+      - run:
+          name: Displays Environment
+          command: |
+            echo "OS and Architecture"
+            uname -a
+            echo "Environment"
+            env
+
+################################################################################
+######################  jobs  ##################################################
+################################################################################
+
+jobs:
+  ####################  snapshot_job  ##########################################
+  ##
+  ## Purpose: To build and publish a SNAPSHOT artifact.  It should run on
+  ## commits to all branches except the "main" and "release-*" branches.
+  snapshot_job:
+    executor: docker_executor
+    steps:
+      - checkout
+
+      # Build SNAPSHOT from code committed to feature or fix branch, and publish
+      # the SNAPSHOT artifact to a private Maven repo.
+      - run:
+          name: Publish SNAPSHOT
+          command: |
+            echo "Building and publishing a SNAPSHOT artifact."
+            ./gradlew clean publish --info
+
+  ####################  release_job  ###########################################
+  ##
+  ## Purpose: To run a release build to do the following:
+  ##  - Create a new versioned released artifact.
+  ##  - Commits the released changes to the "release" branch.
+  ##  - Tags the repository with the new released version.
+  ##  - Publishes the released artifact to a Maven repository.
+  release_job:
+    executor: docker_executor
+    steps:
+      - checkout
+
+      # Execute the Gradle "net.researchgate.release" plugin release task
+      #
+      #   This plugin does the following steps:
+      #   1. Removes the "-SNAPSHOT" from the gradle.properties to create a
+      #      a release Semantic Version.
+      #   2. Updates and commits the updated "gradle.properties" in the
+      #      "release/rel" branch.
+      #   3. Pushes the changes to the "release/rel" branch to remote
+      #   4. Increments the version on the source branch "main"
+      #      gradle.properties file.  Then, commits that change to the branch.
+      #   5. Pushes the changes to the "main" branch to remote
+      #
+      - run:
+          name: Release Build
+          command: |
+            COMMIT_MSG="\[Gradle Release Plugin\]"
+            last_commit_msg="$(git log -1 --pretty=%B)"
+            echo "Parsing last commit msg: ${last_commit_msg}"
+
+            if echo "${last_commit_msg}" | grep -iq "${COMMIT_MSG}"; then
+              echo "Last commit was from Gradle Release Plugin: Job being halted."
+              echo "---------- Halting -----------------------------------------"
+              circleci-agent step halt
+            else
+              echo "Last commit was from PR: Job proceeding to release."
+              echo "---------- Releasing ---------------------------------------"
+              echo "Configuring GIT user.email required for commit pushes."
+              git config --global user.email "$CIRCLECI_GIT_USER_EMAIL"
+              git config --global user.name "$CIRCLECI_GIT_USER_NAME"
+              echo "Publishing and Releasing RELEASED Artifact."
+              ./gradlew release --info
+            fi
+
+################################################################################
+######################  workflows  #############################################
+################################################################################
+
+workflows:
+
+  ####################  build workflow  ########################################
+  build_workflow:
+    jobs:
+
+      ##############  snapshot_job  ############################################
+      - snapshot_job:
+          context:
+            - org-global
+          filters:
+            branches:
+              ignore:
+                - main
+                - /release\/.*/
+
+      ##############  release_job  #############################################
+      - release_job:
+          context:
+            - org-global
+          filters:
+            branches:
+              only:
+                - main

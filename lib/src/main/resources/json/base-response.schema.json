@@ -1,0 +1,32 @@
+{
+  "$id" : "https://rubensgomes.com/schemas/base-response.schema.json",
+  "$schema" : "https://json-schema.org/draft/2020-12/schema",
+  "title" : "Base Response Object",
+  "description" : "A base type to be part of microservice responses.",
+  "type" : "object",
+  "javaType" : "com.rubensgomes.reqresp.BaseResponse",
+  "required" : [ "clientId", "transactionId", "status" ],
+  "properties" : {
+    "clientId" : {
+      "type" : "string",
+      "description" : "The client who made the initial originating request."
+    },
+    "transactionId" : {
+      "type" : "string",
+      "description" : "Unique text used to correlate requests and responses."
+    },
+    "status" : {
+      "type" : "string",
+      "description" : "The status of the response.",
+      "enum" : [ "UNPROCESSED", "FAILURE", "PARTIAL", "SUCCESS" ]
+    },
+    "message" : {
+      "type" : "string",
+      "description" : "An informational or error message."
+    },
+    "rootCauseError" : {
+      "type" : "string",
+      "description" : "The root cause error message."
+    }
+  }
+}
