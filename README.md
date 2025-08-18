@@ -50,6 +50,7 @@ request and response, where the Error type is used to return errors.
 
 ```shell
 git checkout release
+git pull
 ./gradlew --info publish
 git checkout main
 ```
