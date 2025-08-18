@@ -1,209 +1,357 @@
+/*
+ * Copyright 2025 Rubens Gomes
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the__LICENSE] [1].
+ */
+
+/**
+ * This is a blueprint Gradle build.gradle.kts file used by Rubens Gomes during the creation of a
+ * new Gradle Spring Boot Java development project.
+ *
+ * @author [Rubens Gomes](https://rubensgomes.com)
+ */
 plugins {
-  id("idea")
-  id("maven-publish")
-  id("version-catalog")
-  id("java-library")
-  alias(ctlg.plugins.jsonschema2pojo)
-  alias(ctlg.plugins.release)
-  alias(ctlg.plugins.spotless)
+    id("idea")
+    id("maven-publish")
+    id("version-catalog")
+    id("java-library")
+    // org.jsonschema2pojo
+    alias(libs.plugins.jsonschema2pojo)
+    // net.researchgate.release
+    alias(libs.plugins.release)
+    // com.diffplug.spotless
+    alias(libs.plugins.spotless)
 }
-
-val developerId: String by project
-val developerName: String by project
-
+// --------------- >>> gradle properties <<< ----------------------------------
+// properties used to configure "jar" and "publish" tasks
 val group: String by project
 val artifact: String by project
 val version: String by project
 val title: String by project
-val description: String by project
+val license: String by project
+val licenseUrl: String by project
+val developerEmail: String by project
+val developerId: String by project
+val developerName: String by project
+val scmConnection: String by project
+val scmUrl: String by project
+val repsyUrl: String by project
+// REPSY_USERNAME must be defined as an environment variable
+// REPSY_PASSWORD must be defined as an environment variable
+val repsyUsername: String? = System.getenv("REPSY_USERNAME")
+val repsyPassword: String? = System.getenv("REPSY_PASSWORD")
 
 project.group = group
-
 project.version = version
-
 project.description = description
 
-idea {
-  module {
-    // download javadocs and sources:
-    // $ ./gradlew cleanIdea idea
-    isDownloadJavadoc = true
-    isDownloadSources = true
-  }
+// --------------- >>> repositories <<< ---------------------------------------
+
+repositories {
+    // Use Maven Central for resolving dependencies.
+    mavenCentral()
 }
 
-java {
-  withSourcesJar()
-  withJavadocJar()
-  toolchain {
-    languageVersion.set(JavaLanguageVersion.of(21))
-    vendor.set(JvmVendorSpec.AMAZON)
-  }
-}
-
-configure<com.diffplug.gradle.spotless.SpotlessExtension> {
-  json {
-    target("src/**/*.json")
-    jackson()
-  }
-
-  kotlinGradle {
-    target("*.gradle.kts")
-    ktfmt()
-  }
-}
-
-publishing {
-  publications {
-    val developerEmail: String by project
-
-    val scmConnection: String by project
-    val scmUrl: String by project
-
-    val license: String by project
-    val licenseUrl: String by project
-
-    create<MavenPublication>("maven") {
-      groupId = project.group.toString()
-      artifactId = artifact
-      version = project.version.toString()
-
-      from(components["java"])
-
-      pom {
-        name = title
-        description = project.description
-        inceptionYear = "2024"
-        packaging = "jar"
-
-        licenses {
-          license {
-            name = license
-            url = licenseUrl
-          }
-        }
-        developers {
-          developer {
-            id = developerId
-            name = developerName
-            email = developerEmail
-          }
-        }
-        scm {
-          connection = scmConnection
-          developerConnection = scmConnection
-          url = scmUrl
-        }
-      }
-    }
-  }
-
-  repositories {
-    val repsyUrl: String by project
-    val repsyUsername: String by project
-    val repsyPassword: String by project
-
-    maven {
-      url = uri(repsyUrl)
-      credentials {
-        username = repsyUsername
-        password = repsyPassword
-      }
-    }
-  }
-}
-
-// "net.researchgate.release" configuration
-release {
-  with(git) {
-    pushReleaseVersionBranch.set("release")
-    requireBranch.set("main")
-  }
-}
-
-// net.researchgate.release plugin task
-tasks.afterReleaseBuild { dependsOn("publish") }
-
-tasks.jar {
-  manifest {
-    attributes(
-        mapOf(
-            "Specification-Title" to title,
-            "Implementation-Title" to artifact,
-            "Implementation-Version" to project.version,
-            "Implementation-Vendor" to developerName,
-            "Built-By" to developerId,
-            "Build-Jdk" to System.getProperty("java.home"),
-            "Created-By" to
-                "${System.getProperty("java.version")} (${
-                            System.getProperty(
-                                "java.vendor"
-                            )
-                        })"))
-  }
-}
+// --------------- >>> dependencies <<< ---------------------------------------
 
 dependencies {
-  implementation(ctlg.jackson.databind)
-  implementation(ctlg.jakarta.validation.api)
+    // ########## implementation ###############################################
+    // com.fasterxml.jackson.core:jackson-databind
+    implementation(libs.jackson.databind)
+    // jakarta.validation:jakarta.validation-api
+    implementation(libs.jakarta.validation.api)
 }
+
+// ----------------------------------------------------------------------------
+// --------------- >>> Gradle Base Plugin <<< ---------------------------------
+// NOTE: This section is dedicated to configuring the Gradle base plugin.
+// ----------------------------------------------------------------------------
+// https://docs.gradle.org/current/userguide/base_plugin.html
+
+// ----------------------------------------------------------------------------
+// --------------- >>> Gradle IDEA Plugin <<< ---------------------------------
+// NOTE: This section is dedicated to configuring the Idea plugin.
+// ----------------------------------------------------------------------------
+// https://docs.gradle.org/current/userguide/idea_plugin.html
+
+idea {
+    module {
+        // download javadocs and sources:
+        // $ ./gradlew cleanIdea idea
+        isDownloadJavadoc = true
+        isDownloadSources = true
+    }
+}
+
+// ----------------------------------------------------------------------------
+// --------------- >>> Gradle Java Plugin <<< ---------------------------------
+// NOTE: This section is dedicated to configuring the Java plugin.
+// ----------------------------------------------------------------------------
+// https://docs.gradle.org/current/userguide/java_plugin.html
 
 // Add Java sources generated by the jsonSchema2Pojo
 sourceSets {
-  main {
-    java {
-      // sources generated by the jsonSchema2Pojo plugind
-      srcDir("${layout.buildDirectory}/generatedsources/js2p/")
+    main {
+        java {
+            // sources generated by the jsonSchema2Pojo plugind
+            srcDir("${layout.buildDirectory}/generatedsources/js2p/")
+        }
     }
-  }
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_21
+    targetCompatibility = JavaVersion.VERSION_21
+    withSourcesJar()
+    withJavadocJar()
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of(21))
+        vendor.set(JvmVendorSpec.AMAZON)
+    }
+}
+
+tasks.compileJava {
+    // Ensure we have a clean code prior to compilateion
+    dependsOn("spotlessApply")
+}
+
+tasks.javadoc {
+    if (JavaVersion.current().isJava9Compatible) {
+        (options as StandardJavadocDocletOptions).addBooleanOption("html5", true)
+    }
 }
 
 tasks.named<Jar>("sourcesJar") { dependsOn("generateJsonSchema2Pojo") }
 
-tasks.javadoc {
-  if (JavaVersion.current().isJava9Compatible) {
-    (options as StandardJavadocDocletOptions).addBooleanOption("html5", true)
-  }
+tasks.jar {
+    manifest {
+        attributes(
+            mapOf(
+                "Specification-Title" to title,
+                "Implementation-Title" to artifact,
+                "Implementation-Version" to version,
+                "Implementation-Vendor" to developerName,
+                "Built-By" to developerId,
+                "Build-Jdk" to System.getProperty("java.home"),
+                "Created-By" to
+                    "${System.getProperty("java.version")} (${
+                        System.getProperty(
+                            "java.vendor",
+                        )
+                    })",
+            ),
+        )
+    }
+}
+
+// ----------------------------------------------------------------------------
+// --------------- >>> Gradle Maven Publish Plugin <<< ------------------------
+// NOTE: This section is dedicated to configuring the maven-publich plugin.
+// ----------------------------------------------------------------------------
+// https://docs.gradle.org/current/userguide/publishing_maven.html
+
+publishing {
+    publications {
+        create<MavenPublication>("mavenJava") {
+            versionMapping {
+                usage("java-api") { fromResolutionOf("runtimeClasspath") }
+                usage("java-runtime") { fromResolutionResult() }
+            }
+
+            groupId = project.group.toString()
+            artifactId = artifact
+            version = project.version.toString()
+
+            from(components["java"])
+
+            pom {
+                name = title
+                inceptionYear = "2025"
+                packaging = "jar"
+
+                licenses {
+                    license {
+                        name = license
+                        url = licenseUrl
+                    }
+                }
+
+                developers {
+                    developer {
+                        id = developerId
+                        name = developerName
+                        email = developerEmail
+                    }
+                }
+
+                scm {
+                    connection = scmConnection
+                    developerConnection = scmConnection
+                    url = scmUrl
+                }
+            }
+        }
+    }
+
+    repositories {
+        maven {
+            url = uri(repsyUrl)
+            credentials {
+                username = repsyUsername
+                password = repsyPassword
+            }
+        }
+    }
+}
+
+// ----------------------------------------------------------------------------
+// --------------- >>> com.diffplug.spotless Plugin <<< -----------------------
+// NOTE: This section is dedicated to configuring the spotless plugin.
+// ----------------------------------------------------------------------------
+// https://github.com/diffplug/spotless
+
+spotless {
+    java {
+        target("src/**/*.java")
+
+        // Use Google Java Format
+        googleJavaFormat()
+
+        // Remove unused imports
+        removeUnusedImports()
+
+        licenseHeader(
+            """
+            /*
+             * Copyright 2025 Rubens Gomes
+             *
+             * Licensed under the Apache License, Version 2.0 (the "License");
+             * you may not use this file except in compliance with the License.
+             * You may obtain a copy of the License at
+             *
+             *     http://www.apache.org/licenses/LICENSE-2.0
+             *
+             * Unless required by applicable law or agreed to in writing, software
+             * distributed under the License is distributed on an "AS IS" BASIS,
+             * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+             * See the License for the specific language governing permissions and
+             * limitations under the License.
+             */
+            """.trimIndent(),
+        )
+
+        // Custom import order
+        importOrder("java", "javax", "org", "com", "")
+
+        // Trim trailing whitespace
+        trimTrailingWhitespace()
+
+        // End with newline
+        endWithNewline()
+    }
+
+    json {
+        target("src/**/*.json")
+        jackson()
+    }
+
+    // Format Kotlin files (if you add any)
+    kotlin {
+        ktfmt()
+        trimTrailingWhitespace()
+        endWithNewline()
+    }
+
+    // Format Gradle Kotlin DSL build file
+    kotlinGradle {
+        target("*.gradle.kts")
+        // Use .editorconfig for fine-grained control
+        ktlint().setEditorConfigPath("../.editorconfig")
+        trimTrailingWhitespace()
+        endWithNewline()
+    }
+}
+
+// ----------------------------------------------------------------------------
+// --------------- >>> net.researchgate.release Plugin <<< --------------------
+// NOTE: This section is dedicated to configuring the release plugin.
+// ----------------------------------------------------------------------------
+// https://github.com/researchgate/gradle-release
+
+release {
+    // Git configuration
+    git {
+        requireBranch.set("main")
+        pushToRemote.set("origin")
+        pushToBranchPrefix.set("")
+    }
+
+    // Version management
+    versionPropertyFile.set("gradle.properties")
+    tagTemplate.set("v$version")
+
+    // Pre-release tasks
+    preTagCommitMessage.set("Pre-tag commit: ")
+    tagCommitMessage.set("Creating tag: ")
+    newVersionCommitMessage.set("New version: ")
+
+    // Fail on updateNeeded
+    failOnUpdateNeeded.set(true)
 }
 
 // ####################### jsonSchema2Pojo plugin ##############################
+// ----------------------------------------------------------------------------
+// --------------- >>>  org.jsonschema2pojo Plugin <<< ------------------------
+// NOTE: This section is dedicated to configuring the release plugin.
+// ----------------------------------------------------------------------------
+// https://github.com/joelittlejohn/jsonschema2pojo/tree/master/jsonschema2pojo-gradle-plugin
 
 jsonSchema2Pojo {
-  // Whether to generate builder-style methods of the form withXxx(value)
-  // (that return this), alongside the standard, void-return setters.
-  generateBuilders = true
+    // Whether to generate builder-style methods of the form withXxx(value)
+    // (that return this), alongside the standard, void-return setters.
+    generateBuilders = true
 
-  // If set to true, then the gang of four builder pattern will be used to
-  // generate builders on generated classes. Note: This property works in
-  // collaboration with generateBuilders.  If generateBuilders is false then
-  // this property will not do anything.
-  useInnerClassBuilders = true
+    // If set to true, then the gang of four builder pattern will be used to
+    // generate builders on generated classes. Note: This property works in
+    // collaboration with generateBuilders.  If generateBuilders is false then
+    // this property will not do anything.
+    useInnerClassBuilders = true
 
-  // Whether to generate constructors or not.
-  includeConstructors = true
+    // Whether to generate constructors or not.
+    includeConstructors = true
 
-  // Whether to include JSR-303/349 annotations (for schema rules like
-  // minimum, maximum, etc) in generated Java types. Schema rules and the
-  // annotation they produce:
-  //  - maximum = @DecimalMax
-  //  - minimum = @DecimalMin
-  //  - minItems,maxItems = @Size
-  //  - minLength,maxLength = @Size
-  //  - pattern = @Pattern
-  //  - required = @NotNull
-  // Any Java fields which are an object or array of objects will be
-  // annotated with @Valid to support validation of an entire document tree.
-  includeJsr303Annotations = true
+    // Whether to include JSR-303/349 annotations (for schema rules like
+    // minimum, maximum, etc) in generated Java types. Schema rules and the
+    // annotation they produce:
+    //  - maximum = @DecimalMax
+    //  - minimum = @DecimalMin
+    //  - minItems,maxItems = @Size
+    //  - minLength,maxLength = @Size
+    //  - pattern = @Pattern
+    //  - required = @NotNull
+    // Any Java fields which are an object or array of objects will be
+    // annotated with @Valid to support validation of an entire document tree.
+    includeJsr303Annotations = true
 
-  // What Java version to target with generated source code
-  // (1.6, 1.8, 9, 11, etc).
-  // By default, the version will be taken from the Gradle Java plugin's
-  // 'sourceCompatibility', which (if unset) itself defaults to the current
-  // JVM version
-  targetVersion = "21"
+    // What Java version to target with generated source code
+    // (1.6, 1.8, 9, 11, etc).
+    // By default, the version will be taken from the Gradle Java plugin's
+    // 'sourceCompatibility', which (if unset) itself defaults to the current
+    // JVM version
+    targetVersion = "21"
 
-  // Whether to use annotations from jakarta.validation package instead of
-  // javax.validation package when adding JSR-303 annotations to generated
-  // Java types
-  useJakartaValidation = true
+    // Whether to use annotations from jakarta.validation package instead of
+    // javax.validation package when adding JSR-303 annotations to generated
+    // Java types
+    useJakartaValidation = true
 }
