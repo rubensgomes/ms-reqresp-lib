@@ -289,24 +289,23 @@ spotless {
 // https://github.com/researchgate/gradle-release
 
 release {
-    // Git configuration
-    git {
-        requireBranch.set("main")
+    with(git) {
+        pushReleaseVersionBranch.set("release")
         pushToRemote.set("origin")
-        pushToBranchPrefix.set("")
+        requireBranch.set("main")
     }
 
-    // Version management
-    versionPropertyFile.set("gradle.properties")
-    tagTemplate.set("v$version")
-
-    // Pre-release tasks
-    preTagCommitMessage.set("Pre-tag commit: ")
-    tagCommitMessage.set("Creating tag: ")
-    newVersionCommitMessage.set("New version: ")
-
-    // Fail on updateNeeded
-    failOnUpdateNeeded.set(true)
+//    // Version management
+//    versionPropertyFile.set("gradle.properties")
+//    tagTemplate.set("v$version")
+//
+//    // Pre-release tasks
+//    preTagCommitMessage.set("Pre-tag commit: ")
+//    tagCommitMessage.set("Creating tag: ")
+//    newVersionCommitMessage.set("New version: ")
+//
+//    // Fail on updateNeeded
+//    failOnUpdateNeeded.set(true)
 }
 
 // ####################### jsonSchema2Pojo plugin ##############################
