@@ -15,6 +15,8 @@
  */
 package com.rubensgomes.reqresp.dto;
 
+import lombok.extern.slf4j.Slf4j;
+
 /**
  * Represents the lifecycle or outcome of processing a request/response.
  *
@@ -23,6 +25,7 @@ package com.rubensgomes.reqresp.dto;
  *
  * @author Rubens Gomes
  */
+@Slf4j
 public enum Status {
   /** Operation completed successfully. */
   SUCCESS,
@@ -41,5 +44,10 @@ public enum Status {
   /** Operation did not finish within the allotted time. */
   TIMEOUT,
   /** Operation was aborted prematurely due to a fatal condition. */
-  ABORTED
+  ABORTED;
+
+  /** Logs the status for debugging purposes. */
+  public void logStatus() {
+    log.debug("Status: {}", this.name());
+  }
 }

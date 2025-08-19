@@ -32,6 +32,7 @@ plugins {
     // com.diffplug.spotless
     alias(libs.plugins.spotless)
 }
+
 // --------------- >>> gradle properties <<< ----------------------------------
 // properties used to configure "jar" and "publish" tasks
 val group: String by project
@@ -60,6 +61,7 @@ project.description = description
 repositories {
     // Use Maven Central for resolving dependencies.
     mavenCentral()
+    maven { url = uri("https://repo.repsy.io/mvn/rubensgomes/default/") }
 }
 
 // --------------- >>> dependencies <<< ---------------------------------------
@@ -67,17 +69,29 @@ repositories {
 dependencies {
     // ########## api #########################################################
     // jakarta.validation:jakarta.validation-api
-    api(libs.jakarta.validation.api)
+    implementation(libs.jakarta.validation.api)
+    // org.slf4j:slf4j-api
+    implementation(libs.slf4j.api)
 
     // ########## testImplementation ##########################################
-    // JUnit Jupiter bundle for tests
+    // Logback bundle:
+    //  ch.qos.logback:logback-classic
+    //  ch.qos.logback:logback-core
+    testImplementation(libs.bundles.logback)
+    // JUnit Jupiter bundle for tests:
+    //   org.junit.jupiter:junit-jupiter-api
+    //   org.junit.jupiter:junit-jupiter-engine
     testImplementation(libs.bundles.junit.jupiter)
-    // Bean Validation provider for tests
+    // Bean Validation provider for tests:
+    //   jakarta.validation:jakarta.validation-api
+    //   org.glassfish.expressly:expressly
+    //   org.hibernate.validator:hibernate-validator
     testImplementation(libs.bundles.jakarta.bean.validator)
 
     // ########## testRuntimeOnly    ##########################################
+    // JUnit Jupiter Platform Launcher:
+    //   org.junit.platform:junit-platform-launcher
     testRuntimeOnly(libs.junit.platform.launcher)
-    // testRuntimeOnly("org.glassfish:jakarta.el:4.0.2")
 }
 
 // ----------------------------------------------------------------------------

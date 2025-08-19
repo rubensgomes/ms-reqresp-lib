@@ -28,13 +28,16 @@ import jakarta.validation.Validator;
 import jakarta.validation.ValidatorFactory;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 class BaseRequestTest {
 
   private static Validator validator;
 
   @BeforeAll
   static void setupValidator() {
+    log.debug("Setting up validation factory");
     ValidatorFactory factory = Validation.buildDefaultValidatorFactory();
     validator = factory.getValidator();
   }
@@ -45,17 +48,21 @@ class BaseRequestTest {
 
   @Test
   void validation_shouldFail_whenRequiredFieldsMissing() {
+    log.debug("Testing validation failure with missing required fields");
     TestRequest req = new TestRequest();
     Set<ConstraintViolation<TestRequest>> violations = validator.validate(req);
     assertFalse(violations.isEmpty());
+    log.debug("Validation failed with {} violations", violations.size());
   }
 
   @Test
   void validation_shouldPass_whenRequiredFieldsPresent() {
+    log.debug("Testing validation success with all required fields");
     TestRequest req = new TestRequest();
     req.setClientId("c1");
     req.setTransactionId("t1");
     Set<ConstraintViolation<TestRequest>> violations = validator.validate(req);
     assertTrue(violations.isEmpty());
+    log.debug("Validation passed successfully");
   }
 }

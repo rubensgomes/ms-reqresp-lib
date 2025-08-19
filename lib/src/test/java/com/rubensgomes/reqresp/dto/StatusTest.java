@@ -19,16 +19,21 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import org.junit.jupiter.api.Test;
 
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 class StatusTest {
 
   @Test
   void values_shouldContainExpectedConstants() {
+    log.debug("Testing Status enum values");
     assertNotNull(Status.valueOf("SUCCESS"));
     assertNotNull(Status.valueOf("FAILURE"));
   }
 
   @Test
   void toString_shouldReturnName() {
+    log.debug("Testing Status toString method");
     assertEquals("SUCCESS", Status.SUCCESS.toString());
   }
 }
