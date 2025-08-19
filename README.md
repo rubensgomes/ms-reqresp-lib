@@ -32,7 +32,8 @@ request and response, where the Error type is used to return errors.
 ```
 
 ```shell
-./gradlew --info check
+# --info is required for Grdle to display logs from tests
+./gradlew --info clean test
 ```
 
 ```shell
@@ -41,6 +42,11 @@ request and response, where the Error type is used to return errors.
 
 ```shell
 ./gradlew --info assemble
+```
+
+```shell
+git commit -m "updated gradle-catalog" -a
+git push
 ```
 
 ```shell
