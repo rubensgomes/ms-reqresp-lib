@@ -38,7 +38,7 @@ import jakarta.validation.ValidatorFactory;
  * Unit tests for the {@link BaseResponse} abstract class.
  *
  * <p>This test class verifies the behavior of BaseResponse by testing a concrete implementation
- * that covers all the fields and methods.
+ * that covers all the fields, methods, and validation constraints.
  *
  * @author Rubens Gomes
  */
@@ -56,21 +56,61 @@ class BaseResponseTest {
     // No additional methods needed for testing the base functionality
   }
 
+  /** Test implementation of the ErrorCode interface for testing error scenarios. */
+  private static class TestErrorCodeImpl implements ErrorCode {
+    private final String code;
+    private final String description;
+
+    public TestErrorCodeImpl(String code, String description) {
+      this.code = code;
+      this.description = description;
+    }
+
+    @Override
+    public String getCode() {
+      return code;
+    }
+
+    @Override
+    public String getDescription() {
+      return description;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+      TestErrorCodeImpl that = (TestErrorCodeImpl) o;
+      return java.util.Objects.equals(code, that.code)
+          && java.util.Objects.equals(description, that.description);
+    }
+
+    @Override
+    public int hashCode() {
+      return java.util.Objects.hash(code, description);
+    }
+
+    @Override
+    public String toString() {
+      return String.format("TestErrorCodeImpl{code='%s', description='%s'}", code, description);
+    }
+  }
+
   /** Test implementation of the Error interface for testing error scenarios. */
   private static class TestErrorImpl implements Error {
-    private final String errorMessage;
+    private final String errorDescription;
     private final String nativeErrorText;
-    private final String errorCode;
+    private final ErrorCode errorCode;
 
-    public TestErrorImpl(String errorMessage, String nativeErrorText, String errorCode) {
-      this.errorMessage = errorMessage;
+    public TestErrorImpl(String errorDescription, String nativeErrorText, ErrorCode errorCode) {
+      this.errorDescription = errorDescription;
       this.nativeErrorText = nativeErrorText;
       this.errorCode = errorCode;
     }
 
     @Override
-    public String getErrorMessage() {
-      return errorMessage;
+    public String getErrorDescription() {
+      return errorDescription;
     }
 
     @Override
@@ -79,15 +119,15 @@ class BaseResponseTest {
     }
 
     @Override
-    public String getErrorCode() {
+    public ErrorCode getErrorCode() {
       return errorCode;
     }
 
     @Override
     public String toString() {
       return String.format(
-          "TestErrorImpl{errorMessage='%s', nativeErrorText='%s', errorCode='%s'}",
-          errorMessage, nativeErrorText, errorCode);
+          "TestErrorImpl{errorDescription='%s', nativeErrorText='%s', errorCode=%s}",
+          errorDescription, nativeErrorText, errorCode);
     }
   }
 
@@ -163,6 +203,24 @@ class BaseResponseTest {
   }
 
   @Test
+  @DisplayName("Validation should fail when clientId is whitespace only")
+  void validation_shouldFail_whenClientIdIsWhitespaceOnly() {
+    // Given
+    response.setClientId("   ");
+    response.setTransactionId("test-transaction");
+    response.setStatus(Status.SUCCESS);
+
+    // When
+    Set<ConstraintViolation<TestBaseResponseImpl>> violations = validator.validate(response);
+
+    // Then
+    assertEquals(1, violations.size());
+    ConstraintViolation<TestBaseResponseImpl> violation = violations.iterator().next();
+    assertEquals("clientId", violation.getPropertyPath().toString());
+    assertEquals("clientId is required", violation.getMessage());
+  }
+
+  @Test
   @DisplayName("Validation should fail when transactionId is null")
   void validation_shouldFail_whenTransactionIdIsNull() {
     // Given
@@ -185,7 +243,7 @@ class BaseResponseTest {
   void validation_shouldFail_whenTransactionIdIsBlank() {
     // Given
     response.setClientId("test-client");
-    response.setTransactionId("   ");
+    response.setTransactionId("");
     response.setStatus(Status.SUCCESS);
 
     // When
@@ -254,7 +312,8 @@ class BaseResponseTest {
     String transactionId = "txn-456";
     Status status = Status.FAILURE;
     String message = "Test message";
-    Error error = new TestErrorImpl("Test error", "Native error text", "ERR001");
+    ErrorCode errorCode = new TestErrorCodeImpl("TEST_ERROR", "Test error occurred");
+    Error error = new TestErrorImpl("Test error description", "Native error text", errorCode);
 
     // When
     response.setClientId(clientId);
@@ -279,7 +338,8 @@ class BaseResponseTest {
     response.setTransactionId("test-transaction");
     response.setStatus(Status.SUCCESS);
     response.setMessage("Success message");
-    Error error = new TestErrorImpl("Test error", "Native error", "ERR001");
+    ErrorCode errorCode = new TestErrorCodeImpl("SUCCESS_CODE", "Operation successful");
+    Error error = new TestErrorImpl("Success details", "No native error", errorCode);
     response.setError(error);
 
     // When
@@ -386,7 +446,8 @@ class BaseResponseTest {
     response.setTransactionId("test-transaction");
     response.setStatus(Status.SUCCESS);
     response.setMessage("test message");
-    Error error = new TestErrorImpl("error", "native", "ERR001");
+    ErrorCode errorCode = new TestErrorCodeImpl("TEST_CODE", "Test error");
+    Error error = new TestErrorImpl("error description", "native error", errorCode);
     response.setError(error);
 
     // When
@@ -424,5 +485,92 @@ class BaseResponseTest {
     assertEquals(response1.hashCode(), response2.hashCode());
     assertNotEquals(response1, response3);
     assertNotEquals(response1.hashCode(), response3.hashCode());
+  }
+
+  @Test
+  @DisplayName("Should handle complex Error objects correctly")
+  void shouldHandleComplexErrorObjectsCorrectly() {
+    // Given
+    ErrorCode dbErrorCode =
+        new TestErrorCodeImpl("DB_CONNECTION_FAILED", "Database connection failed");
+    Error dbError =
+        new TestErrorImpl(
+            "Unable to connect to database",
+            "java.sql.SQLException: Connection refused",
+            dbErrorCode);
+
+    response.setClientId("db-client");
+    response.setTransactionId("db-txn-001");
+    response.setStatus(Status.FAILURE);
+    response.setMessage("Database operation failed");
+    response.setError(dbError);
+
+    // When & Then
+    assertEquals("db-client", response.getClientId());
+    assertEquals("db-txn-001", response.getTransactionId());
+    assertEquals(Status.FAILURE, response.getStatus());
+    assertEquals("Database operation failed", response.getMessage());
+    assertNotNull(response.getError());
+    assertEquals("Unable to connect to database", response.getError().getErrorDescription());
+    assertEquals("DB_CONNECTION_FAILED", response.getError().getErrorCode().getCode());
+
+    // Validation should pass
+    Set<ConstraintViolation<TestBaseResponseImpl>> violations = validator.validate(response);
+    assertTrue(violations.isEmpty());
+  }
+
+  @Test
+  @DisplayName("Should support typical response scenarios")
+  void shouldSupportTypicalResponseScenarios() {
+    // Test successful response scenario
+    response.setClientId("web-app");
+    response.setTransactionId("req-001");
+    response.setStatus(Status.SUCCESS);
+    response.setMessage("Operation completed successfully");
+    response.setError(null);
+
+    assertTrue(validator.validate(response).isEmpty());
+    assertEquals(Status.SUCCESS, response.getStatus());
+    assertNull(response.getError());
+
+    // Test failure response scenario
+    ErrorCode errorCode = new TestErrorCodeImpl("VALIDATION_FAILED", "Input validation failed");
+    Error validationError =
+        new TestErrorImpl("Required field missing", "Field 'email' cannot be null", errorCode);
+
+    response.setStatus(Status.FAILURE);
+    response.setMessage("Request validation failed");
+    response.setError(validationError);
+
+    assertTrue(validator.validate(response).isEmpty());
+    assertEquals(Status.FAILURE, response.getStatus());
+    assertNotNull(response.getError());
+    assertEquals("VALIDATION_FAILED", response.getError().getErrorCode().getCode());
+  }
+
+  @Test
+  @DisplayName("Should work correctly when subclassed")
+  void shouldWorkCorrectlyWhenSubclassed() {
+    // This test verifies that the abstract BaseResponse works correctly
+    // when extended by concrete implementations
+
+    TestBaseResponseImpl concreteResponse = new TestBaseResponseImpl();
+
+    // Should be able to set all fields
+    concreteResponse.setClientId("subclass-client");
+    concreteResponse.setTransactionId("subclass-txn");
+    concreteResponse.setStatus(Status.SUCCESS);
+
+    // Should inherit all behavior
+    assertEquals("subclass-client", concreteResponse.getClientId());
+    assertEquals("subclass-txn", concreteResponse.getTransactionId());
+    assertEquals(Status.SUCCESS, concreteResponse.getStatus());
+
+    // Should inherit validation behavior
+    assertTrue(validator.validate(concreteResponse).isEmpty());
+
+    // Should inherit logging behavior
+    concreteResponse.logResponse();
+    assertFalse(logAppender.list.isEmpty());
   }
 }
