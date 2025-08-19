@@ -15,6 +15,7 @@
  */
 package com.rubensgomes.reqresp.dto;
 
+import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
@@ -47,18 +48,19 @@ public abstract class BaseResponse {
   private Status status;
 
   /** Optional human-readable message providing additional context. */
-  private String message;
+  @Nullable private String message;
 
-  /** Optional root cause or debugging detail when the response indicates an error. */
-  private String rootCause;
+  /** Optional error details when the response indicates a failure status. */
+  @Nullable private Error error;
 
   /** Logs the response details for debugging and tracing purposes. */
   public void logResponse() {
     log.debug(
-        "Response - clientId: {}, transactionId: {}, status: {}, message: {}",
+        "Response - clientId: {}, transactionId: {}, status: {}, message: {}, error: {}",
         clientId,
         transactionId,
         status,
-        message);
+        message,
+        error);
   }
 }

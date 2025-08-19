@@ -59,7 +59,6 @@ project.description = description
 // --------------- >>> repositories <<< ---------------------------------------
 
 repositories {
-    // Use Maven Central for resolving dependencies.
     mavenCentral()
     maven { url = uri("https://repo.repsy.io/mvn/rubensgomes/default/") }
 }
@@ -67,7 +66,9 @@ repositories {
 // --------------- >>> dependencies <<< ---------------------------------------
 
 dependencies {
-    // ########## api #########################################################
+    // ########## implementation ##############################################
+    // jakarta.annotation:jakarta.annotation-api
+    implementation(libs.jakarta.annotation.api)
     // jakarta.validation:jakarta.validation-api
     implementation(libs.jakarta.validation.api)
     // org.slf4j:slf4j-api
@@ -281,7 +282,27 @@ spotless {
 
     // Format Kotlin files (if you add any)
     kotlin {
+        target("src/**/*.kt")
         ktfmt()
+        licenseHeader(
+            """
+            /*
+             * Copyright 2025 Rubens Gomes
+             *
+             * Licensed under the Apache License, Version 2.0 (the "License");
+             * you may not use this file except in compliance with the License.
+             * You may obtain a copy of the License at
+             *
+             *     http://www.apache.org/licenses/LICENSE-2.0
+             *
+             * Unless required by applicable law or agreed to in writing, software
+             * distributed under the License is distributed on an "AS IS" BASIS,
+             * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+             * See the License for the specific language governing permissions and
+             * limitations under the License.
+             */
+            """.trimIndent(),
+        )
         trimTrailingWhitespace()
         endWithNewline()
     }
