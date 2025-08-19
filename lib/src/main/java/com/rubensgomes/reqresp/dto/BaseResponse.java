@@ -18,6 +18,7 @@ package com.rubensgomes.reqresp.dto;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Base response DTO containing common fields shared by service responses.
@@ -31,6 +32,7 @@ import lombok.Data;
  * @author Rubens Gomes
  */
 @Data
+@Slf4j
 public abstract class BaseResponse {
   /** Identifier of the client application originating the request. */
   @NotBlank(message = "clientId is required")
@@ -49,4 +51,14 @@ public abstract class BaseResponse {
 
   /** Optional root cause or debugging detail when the response indicates an error. */
   private String rootCause;
+
+  /** Logs the response details for debugging and tracing purposes. */
+  public void logResponse() {
+    log.debug(
+        "Response - clientId: {}, transactionId: {}, status: {}, message: {}",
+        clientId,
+        transactionId,
+        status,
+        message);
+  }
 }

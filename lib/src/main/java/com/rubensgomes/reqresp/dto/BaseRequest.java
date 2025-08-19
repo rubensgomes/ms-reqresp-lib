@@ -17,6 +17,7 @@ package com.rubensgomes.reqresp.dto;
 
 import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Base request DTO containing common identifiers shared by service requests.
@@ -26,6 +27,7 @@ import lombok.Data;
  * @author Rubens Gomes
  */
 @Data
+@Slf4j
 public abstract class BaseRequest {
   /** Identifier of the client application originating the request. */
   @NotBlank(message = "clientId is required")
@@ -34,4 +36,9 @@ public abstract class BaseRequest {
   /** Correlation identifier used to trace a request across systems. */
   @NotBlank(message = "transactionId is required")
   private String transactionId;
+
+  /** Logs the request details for debugging and tracing purposes. */
+  public void logRequest() {
+    log.debug("Request - clientId: {}, transactionId: {}", clientId, transactionId);
+  }
 }
