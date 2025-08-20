@@ -98,6 +98,20 @@ public interface Error {
   String getNativeErrorText();
 
   /**
+   * Sets the native error text for this error.
+   *
+   * <p>This method allows updating the optional, low-level diagnostic information that may be
+   * useful for debugging or logging purposes. The native error text can include stack traces,
+   * system error messages, or other technical details that are not suitable for end-user display.
+   *
+   * <p>This field is optional and may be set to null when no native error information is available
+   * or relevant.
+   *
+   * @param nativeErrorText the native error text to set, or null if not available
+   */
+  void setNativeErrorText(@Nullable String nativeErrorText);
+
+  /**
    * Returns the structured error code associated with this error.
    *
    * <p>This method provides a comprehensive {@link ErrorCode} object that contains both a unique
