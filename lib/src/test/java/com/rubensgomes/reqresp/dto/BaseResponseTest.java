@@ -99,7 +99,7 @@ class BaseResponseTest {
   /** Test implementation of the Error interface for testing error scenarios. */
   private static class TestErrorImpl implements Error {
     private final String errorDescription;
-    private final String nativeErrorText;
+    private String nativeErrorText;
     private final ErrorCode errorCode;
 
     public TestErrorImpl(String errorDescription, String nativeErrorText, ErrorCode errorCode) {
@@ -116,6 +116,11 @@ class BaseResponseTest {
     @Override
     public String getNativeErrorText() {
       return nativeErrorText;
+    }
+
+    @Override
+    public void setNativeErrorText(String nativeErrorText) {
+      this.nativeErrorText = nativeErrorText;
     }
 
     @Override

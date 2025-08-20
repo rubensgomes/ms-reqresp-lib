@@ -86,7 +86,7 @@ class ErrorTest {
   /** Test implementation of the Error interface for testing purposes. */
   private static class TestErrorImpl implements Error {
     private final String errorDescription;
-    private final String nativeErrorText;
+    private String nativeErrorText;
     private final ErrorCode errorCode;
 
     public TestErrorImpl(String errorDescription, String nativeErrorText, ErrorCode errorCode) {
@@ -103,6 +103,11 @@ class ErrorTest {
     @Override
     public String getNativeErrorText() {
       return nativeErrorText;
+    }
+
+    @Override
+    public void setNativeErrorText(String nativeErrorText) {
+      this.nativeErrorText = nativeErrorText;
     }
 
     @Override
@@ -465,5 +470,167 @@ class ErrorTest {
     assertEquals("DB_CONNECTION_TIMEOUT", dbError.getErrorCode().getCode());
     assertEquals("API_RATE_LIMIT_EXCEEDED", apiError.getErrorCode().getCode());
     assertEquals("VALIDATION_REQUIRED_FIELD", validationError.getErrorCode().getCode());
+  }
+
+  @Test
+  @DisplayName("setNativeErrorText should update the native error text")
+  void setNativeErrorText_shouldUpdateNativeErrorText() {
+    // Given
+    ErrorCode code = new TestErrorCodeImpl("TEST_CODE", "Test description");
+    Error error = new TestErrorImpl("Test error", "Initial native text", code);
+
+    // When
+    error.setNativeErrorText("Updated native text");
+
+    // Then
+    assertEquals("Updated native text", error.getNativeErrorText());
+  }
+
+  @Test
+  @DisplayName("setNativeErrorText should accept null values")
+  void setNativeErrorText_shouldAcceptNull() {
+    // Given
+    ErrorCode code = new TestErrorCodeImpl("TEST_CODE", "Test description");
+    Error error = new TestErrorImpl("Test error", "Initial native text", code);
+
+    // When
+    error.setNativeErrorText(null);
+
+    // Then
+    assertNull(error.getNativeErrorText());
+
+    // Validation should still pass with null native text
+    Set<ConstraintViolation<Error>> violations = validator.validate(error);
+    assertTrue(violations.isEmpty());
+  }
+
+  @Test
+  @DisplayName("setNativeErrorText should handle empty strings")
+  void setNativeErrorText_shouldHandleEmptyStrings() {
+    // Given
+    ErrorCode code = new TestErrorCodeImpl("TEST_CODE", "Test description");
+    Error error = new TestErrorImpl("Test error", "Initial native text", code);
+
+    // When
+    error.setNativeErrorText("");
+
+    // Then
+    assertEquals("", error.getNativeErrorText());
+    assertTrue(error.getNativeErrorText().isEmpty());
+
+    // Validation should still pass with empty native text
+    Set<ConstraintViolation<Error>> violations = validator.validate(error);
+    assertTrue(violations.isEmpty());
+  }
+
+  @Test
+  @DisplayName("setNativeErrorText should handle long strings")
+  void setNativeErrorText_shouldHandleLongStrings() {
+    // Given
+    ErrorCode code = new TestErrorCodeImpl("TEST_CODE", "Test description");
+    Error error = new TestErrorImpl("Test error", "Initial native text", code);
+    String longNativeText = "Very long native error text: " + "X".repeat(5000);
+
+    // When
+    error.setNativeErrorText(longNativeText);
+
+    // Then
+    assertEquals(longNativeText, error.getNativeErrorText());
+    assertEquals(5029, error.getNativeErrorText().length()); // 29 + 5000
+
+    // Validation should still pass
+    Set<ConstraintViolation<Error>> violations = validator.validate(error);
+    assertTrue(violations.isEmpty());
+  }
+
+  @Test
+  @DisplayName("setNativeErrorText should handle special characters and Unicode")
+  void setNativeErrorText_shouldHandleSpecialCharacters() {
+    // Given
+    ErrorCode code = new TestErrorCodeImpl("TEST_CODE", "Test description");
+    Error error = new TestErrorImpl("Test error", "Initial native text", code);
+    String specialText = "Error with émojis: 🚀 ❌ and unicode: ñáéíóú and symbols: !@#$%^&*() 测试";
+
+    // When
+    error.setNativeErrorText(specialText);
+
+    // Then
+    assertEquals(specialText, error.getNativeErrorText());
+
+    // Validation should still pass
+    Set<ConstraintViolation<Error>> violations = validator.validate(error);
+    assertTrue(violations.isEmpty());
+  }
+
+  @Test
+  @DisplayName("setNativeErrorText should allow multiple updates")
+  void setNativeErrorText_shouldAllowMultipleUpdates() {
+    // Given
+    ErrorCode code = new TestErrorCodeImpl("TEST_CODE", "Test description");
+    Error error = new TestErrorImpl("Test error", "Initial native text", code);
+
+    // When & Then - Multiple updates
+    error.setNativeErrorText("First update");
+    assertEquals("First update", error.getNativeErrorText());
+
+    error.setNativeErrorText("Second update");
+    assertEquals("Second update", error.getNativeErrorText());
+
+    error.setNativeErrorText(null);
+    assertNull(error.getNativeErrorText());
+
+    error.setNativeErrorText("Final update");
+    assertEquals("Final update", error.getNativeErrorText());
+  }
+
+  @Test
+  @DisplayName("setNativeErrorText should work in real-world error handling scenarios")
+  void setNativeErrorText_shouldWorkInRealWorldScenarios() {
+    // Given - Initial error without native text
+    ErrorCode code = new TestErrorCodeImpl("API_CALL_FAILED", "API call failed");
+    Error error = new TestErrorImpl("Failed to call external API", null, code);
+
+    // When - Adding diagnostic information during error handling
+    error.setNativeErrorText(
+        "HTTP 500: Internal Server Error - Response body: {\"error\": \"Database unavailable\"}");
+
+    // Then
+    assertEquals("Failed to call external API", error.getErrorDescription());
+    assertEquals(
+        "HTTP 500: Internal Server Error - Response body: {\"error\": \"Database unavailable\"}",
+        error.getNativeErrorText());
+    assertEquals("API_CALL_FAILED", error.getErrorCode().getCode());
+
+    // Should pass validation
+    Set<ConstraintViolation<Error>> violations = validator.validate(error);
+    assertTrue(violations.isEmpty());
+
+    // When - Updating with more specific diagnostic info
+    error.setNativeErrorText(
+        "HTTP 500: java.net.ConnectException: Connection refused at api.example.com:443");
+
+    // Then
+    assertEquals(
+        "HTTP 500: java.net.ConnectException: Connection refused at api.example.com:443",
+        error.getNativeErrorText());
+  }
+
+  @Test
+  @DisplayName("setNativeErrorText should not affect other error properties")
+  void setNativeErrorText_shouldNotAffectOtherProperties() {
+    // Given
+    ErrorCode originalCode = new TestErrorCodeImpl("ORIGINAL_CODE", "Original description");
+    Error error =
+        new TestErrorImpl("Original error description", "Original native text", originalCode);
+
+    // When
+    error.setNativeErrorText("New native text");
+
+    // Then - Only native text should change
+    assertEquals("Original error description", error.getErrorDescription());
+    assertEquals("New native text", error.getNativeErrorText());
+    assertEquals(originalCode, error.getErrorCode());
+    assertEquals("ORIGINAL_CODE", error.getErrorCode().getCode());
+    assertEquals("Original description", error.getErrorCode().getDescription());
   }
 }
