@@ -25,6 +25,10 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.slf4j.LoggerFactory;
 
+import com.rubensgomes.msreqresplib.Status;
+import com.rubensgomes.msreqresplib.error.Error;
+import com.rubensgomes.msreqresplib.error.ErrorCode;
+
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;

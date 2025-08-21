@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.rubensgomes.msreqresplib.dto;
+package com.rubensgomes.msreqresplib.error;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -29,7 +29,7 @@ import jakarta.validation.Validator;
 import jakarta.validation.ValidatorFactory;
 
 /**
- * Unit tests for the {@link Error} interface.
+ * Unit tests for the {@link com.rubensgomes.msreqresplib.error.Error} interface.
  *
  * <p>This test class verifies the contract of the Error interface by testing concrete
  * implementations that cover all the interface methods and validation constraints.
@@ -41,7 +41,7 @@ class ErrorTest {
 
   private Validator validator;
   private ValidatorFactory factory;
-  private Error error;
+  private com.rubensgomes.msreqresplib.error.Error error;
 
   /** Test implementation of the ErrorCode interface for testing purposes. */
   private static class TestErrorCodeImpl implements ErrorCode {
@@ -84,7 +84,7 @@ class ErrorTest {
   }
 
   /** Test implementation of the Error interface for testing purposes. */
-  private static class TestErrorImpl implements Error {
+  private static class TestErrorImpl implements com.rubensgomes.msreqresplib.error.Error {
     private final String errorDescription;
     private String nativeErrorText;
     private final ErrorCode errorCode;
@@ -190,10 +190,12 @@ class ErrorTest {
   void validation_shouldPass_whenAllRequiredFieldsValid() {
     // Given
     ErrorCode validCode = new TestErrorCodeImpl("VALID_CODE", "Valid description");
-    Error validError = new TestErrorImpl("Valid error description", "Valid native text", validCode);
+    com.rubensgomes.msreqresplib.error.Error validError =
+        new TestErrorImpl("Valid error description", "Valid native text", validCode);
 
     // When
-    Set<ConstraintViolation<Error>> violations = validator.validate(validError);
+    Set<ConstraintViolation<com.rubensgomes.msreqresplib.error.Error>> violations =
+        validator.validate(validError);
 
     // Then
     assertTrue(violations.isEmpty(), "Should have no validation violations");
@@ -204,15 +206,18 @@ class ErrorTest {
   void validation_shouldFail_whenErrorDescriptionIsNull() {
     // Given
     ErrorCode validCode = new TestErrorCodeImpl("VALID_CODE", "Valid description");
-    Error invalidError = new TestErrorImpl(null, "Valid native text", validCode);
+    com.rubensgomes.msreqresplib.error.Error invalidError =
+        new TestErrorImpl(null, "Valid native text", validCode);
 
     // When
-    Set<ConstraintViolation<Error>> violations = validator.validate(invalidError);
+    Set<ConstraintViolation<com.rubensgomes.msreqresplib.error.Error>> violations =
+        validator.validate(invalidError);
 
     // Then
     assertFalse(violations.isEmpty());
     assertEquals(1, violations.size());
-    ConstraintViolation<Error> violation = violations.iterator().next();
+    ConstraintViolation<com.rubensgomes.msreqresplib.error.Error> violation =
+        violations.iterator().next();
     assertEquals("errorDescription", violation.getPropertyPath().toString());
   }
 
@@ -221,15 +226,18 @@ class ErrorTest {
   void validation_shouldFail_whenErrorDescriptionIsBlank() {
     // Given
     ErrorCode validCode = new TestErrorCodeImpl("VALID_CODE", "Valid description");
-    Error invalidError = new TestErrorImpl("", "Valid native text", validCode);
+    com.rubensgomes.msreqresplib.error.Error invalidError =
+        new TestErrorImpl("", "Valid native text", validCode);
 
     // When
-    Set<ConstraintViolation<Error>> violations = validator.validate(invalidError);
+    Set<ConstraintViolation<com.rubensgomes.msreqresplib.error.Error>> violations =
+        validator.validate(invalidError);
 
     // Then
     assertFalse(violations.isEmpty());
     assertEquals(1, violations.size());
-    ConstraintViolation<Error> violation = violations.iterator().next();
+    ConstraintViolation<com.rubensgomes.msreqresplib.error.Error> violation =
+        violations.iterator().next();
     assertEquals("errorDescription", violation.getPropertyPath().toString());
   }
 
@@ -237,15 +245,18 @@ class ErrorTest {
   @DisplayName("Validation should fail when ErrorCode is null")
   void validation_shouldFail_whenErrorCodeIsNull() {
     // Given
-    Error invalidError = new TestErrorImpl("Valid description", "Valid native text", null);
+    com.rubensgomes.msreqresplib.error.Error invalidError =
+        new TestErrorImpl("Valid description", "Valid native text", null);
 
     // When
-    Set<ConstraintViolation<Error>> violations = validator.validate(invalidError);
+    Set<ConstraintViolation<com.rubensgomes.msreqresplib.error.Error>> violations =
+        validator.validate(invalidError);
 
     // Then
     assertFalse(violations.isEmpty());
     assertEquals(1, violations.size());
-    ConstraintViolation<Error> violation = violations.iterator().next();
+    ConstraintViolation<com.rubensgomes.msreqresplib.error.Error> violation =
+        violations.iterator().next();
     assertEquals("errorCode", violation.getPropertyPath().toString());
   }
 
@@ -254,10 +265,12 @@ class ErrorTest {
   void nativeErrorText_canBeNull() {
     // Given
     ErrorCode validCode = new TestErrorCodeImpl("VALID_CODE", "Valid description");
-    Error errorWithNullNative = new TestErrorImpl("Valid description", null, validCode);
+    com.rubensgomes.msreqresplib.error.Error errorWithNullNative =
+        new TestErrorImpl("Valid description", null, validCode);
 
     // When
-    Set<ConstraintViolation<Error>> violations = validator.validate(errorWithNullNative);
+    Set<ConstraintViolation<com.rubensgomes.msreqresplib.error.Error>> violations =
+        validator.validate(errorWithNullNative);
     String nativeText = errorWithNullNative.getNativeErrorText();
 
     // Then
@@ -274,9 +287,12 @@ class ErrorTest {
     ErrorCode numericCode = new TestErrorCodeImpl("ERR_001", "Generic error occurred");
     ErrorCode httpStyleCode = new TestErrorCodeImpl("404_NOT_FOUND", "Resource not found");
 
-    Error error1 = new TestErrorImpl("Database error", "SQL exception", hierarchicalCode);
-    Error error2 = new TestErrorImpl("Generic error", "Unknown exception", numericCode);
-    Error error3 = new TestErrorImpl("Resource error", "HTTP exception", httpStyleCode);
+    com.rubensgomes.msreqresplib.error.Error error1 =
+        new TestErrorImpl("Database error", "SQL exception", hierarchicalCode);
+    com.rubensgomes.msreqresplib.error.Error error2 =
+        new TestErrorImpl("Generic error", "Unknown exception", numericCode);
+    com.rubensgomes.msreqresplib.error.Error error3 =
+        new TestErrorImpl("Resource error", "HTTP exception", httpStyleCode);
 
     // When & Then
     assertEquals("DB_CONNECTION_FAILED", error1.getErrorCode().getCode());
@@ -296,7 +312,8 @@ class ErrorTest {
     String longDescription = "A".repeat(2000);
     String longNativeText = "B".repeat(3000);
     ErrorCode longCode = new TestErrorCodeImpl("LONG_CODE", "C".repeat(1000));
-    Error longError = new TestErrorImpl(longDescription, longNativeText, longCode);
+    com.rubensgomes.msreqresplib.error.Error longError =
+        new TestErrorImpl(longDescription, longNativeText, longCode);
 
     // When & Then
     assertEquals(longDescription, longError.getErrorDescription());
@@ -306,7 +323,8 @@ class ErrorTest {
     assertEquals(3000, longError.getNativeErrorText().length());
 
     // Validation should still pass
-    Set<ConstraintViolation<Error>> violations = validator.validate(longError);
+    Set<ConstraintViolation<com.rubensgomes.msreqresplib.error.Error>> violations =
+        validator.validate(longError);
     assertTrue(violations.isEmpty());
   }
 
@@ -317,7 +335,8 @@ class ErrorTest {
     String specialDescription = "Error with émojis: 🚀 ❌ and unicode: ñáéíóú";
     String specialNativeText = "Native text with symbols: !@#$%^&*() 测试";
     ErrorCode specialCode = new TestErrorCodeImpl("SPECIAL_001", "Special characters error");
-    Error specialError = new TestErrorImpl(specialDescription, specialNativeText, specialCode);
+    com.rubensgomes.msreqresplib.error.Error specialError =
+        new TestErrorImpl(specialDescription, specialNativeText, specialCode);
 
     // When & Then
     assertEquals(specialDescription, specialError.getErrorDescription());
@@ -325,7 +344,8 @@ class ErrorTest {
     assertEquals(specialCode, specialError.getErrorCode());
 
     // Validation should pass
-    Set<ConstraintViolation<Error>> violations = validator.validate(specialError);
+    Set<ConstraintViolation<com.rubensgomes.msreqresplib.error.Error>> violations =
+        validator.validate(specialError);
     assertTrue(violations.isEmpty());
   }
 
@@ -336,8 +356,10 @@ class ErrorTest {
     ErrorCode code1 = new TestErrorCodeImpl("CODE_1", "Description 1");
     ErrorCode code2 = new TestErrorCodeImpl("CODE_2", "Description 2");
 
-    Error error1 = new TestErrorImpl("Error 1", "Native 1", code1);
-    Error error2 = new TestErrorImpl("Error 2", "Native 2", code2);
+    com.rubensgomes.msreqresplib.error.Error error1 =
+        new TestErrorImpl("Error 1", "Native 1", code1);
+    com.rubensgomes.msreqresplib.error.Error error2 =
+        new TestErrorImpl("Error 2", "Native 2", code2);
 
     // When & Then
     assertEquals("Error 1", error1.getErrorDescription());
@@ -358,7 +380,8 @@ class ErrorTest {
   void shouldSupportProgrammaticErrorHandling() {
     // Given
     ErrorCode code = new TestErrorCodeImpl("VALIDATION_FAILED", "Input validation failed");
-    Error error = new TestErrorImpl("Validation error occurred", "Field 'email' is required", code);
+    com.rubensgomes.msreqresplib.error.Error error =
+        new TestErrorImpl("Validation error occurred", "Field 'email' is required", code);
 
     // When - Programmatic handling by code
     ErrorCode errorCode = error.getErrorCode();
@@ -381,7 +404,8 @@ class ErrorTest {
   void shouldSupportUserDisplayScenarios() {
     // Given
     ErrorCode code = new TestErrorCodeImpl("USER_AUTH_FAILED", "Authentication failed");
-    Error error = new TestErrorImpl("User authentication failed", "Invalid credentials", code);
+    com.rubensgomes.msreqresplib.error.Error error =
+        new TestErrorImpl("User authentication failed", "Invalid credentials", code);
 
     // When - User display scenarios
     String primaryMessage = error.getErrorDescription();
@@ -402,9 +426,12 @@ class ErrorTest {
     ErrorCode code2 = new TestErrorCodeImpl("SAME_CODE", "Same description");
     ErrorCode code3 = new TestErrorCodeImpl("DIFFERENT_CODE", "Different description");
 
-    Error error1 = new TestErrorImpl("Same error", "Same native", code1);
-    Error error2 = new TestErrorImpl("Same error", "Same native", code2);
-    Error error3 = new TestErrorImpl("Different error", "Different native", code3);
+    com.rubensgomes.msreqresplib.error.Error error1 =
+        new TestErrorImpl("Same error", "Same native", code1);
+    com.rubensgomes.msreqresplib.error.Error error2 =
+        new TestErrorImpl("Same error", "Same native", code2);
+    com.rubensgomes.msreqresplib.error.Error error3 =
+        new TestErrorImpl("Different error", "Different native", code3);
 
     // When & Then
     assertEquals(error1, error2);
@@ -418,7 +445,8 @@ class ErrorTest {
   void toString_shouldIncludeAllFields() {
     // Given
     ErrorCode code = new TestErrorCodeImpl("TEST_CODE", "Test description");
-    Error error = new TestErrorImpl("Test error", "Test native", code);
+    com.rubensgomes.msreqresplib.error.Error error =
+        new TestErrorImpl("Test error", "Test native", code);
 
     // When
     String result = error.toString();
@@ -439,7 +467,7 @@ class ErrorTest {
     // Database error scenario
     ErrorCode dbCode =
         new TestErrorCodeImpl("DB_CONNECTION_TIMEOUT", "Database connection timed out");
-    Error dbError =
+    com.rubensgomes.msreqresplib.error.Error dbError =
         new TestErrorImpl(
             "Unable to connect to database",
             "java.sql.SQLTimeoutException: Connection timed out after 30000ms",
@@ -447,7 +475,7 @@ class ErrorTest {
 
     // API error scenario
     ErrorCode apiCode = new TestErrorCodeImpl("API_RATE_LIMIT_EXCEEDED", "API rate limit exceeded");
-    Error apiError =
+    com.rubensgomes.msreqresplib.error.Error apiError =
         new TestErrorImpl(
             "Too many requests",
             "HTTP 429: Rate limit exceeded - try again in 60 seconds",
@@ -456,7 +484,7 @@ class ErrorTest {
     // Validation error scenario
     ErrorCode validationCode =
         new TestErrorCodeImpl("VALIDATION_REQUIRED_FIELD", "Required field missing");
-    Error validationError =
+    com.rubensgomes.msreqresplib.error.Error validationError =
         new TestErrorImpl(
             "Required field is missing",
             "Field 'username' cannot be null or empty",
@@ -477,7 +505,8 @@ class ErrorTest {
   void setNativeErrorText_shouldUpdateNativeErrorText() {
     // Given
     ErrorCode code = new TestErrorCodeImpl("TEST_CODE", "Test description");
-    Error error = new TestErrorImpl("Test error", "Initial native text", code);
+    com.rubensgomes.msreqresplib.error.Error error =
+        new TestErrorImpl("Test error", "Initial native text", code);
 
     // When
     error.setNativeErrorText("Updated native text");
@@ -491,7 +520,8 @@ class ErrorTest {
   void setNativeErrorText_shouldAcceptNull() {
     // Given
     ErrorCode code = new TestErrorCodeImpl("TEST_CODE", "Test description");
-    Error error = new TestErrorImpl("Test error", "Initial native text", code);
+    com.rubensgomes.msreqresplib.error.Error error =
+        new TestErrorImpl("Test error", "Initial native text", code);
 
     // When
     error.setNativeErrorText(null);
@@ -500,7 +530,8 @@ class ErrorTest {
     assertNull(error.getNativeErrorText());
 
     // Validation should still pass with null native text
-    Set<ConstraintViolation<Error>> violations = validator.validate(error);
+    Set<ConstraintViolation<com.rubensgomes.msreqresplib.error.Error>> violations =
+        validator.validate(error);
     assertTrue(violations.isEmpty());
   }
 
@@ -509,7 +540,8 @@ class ErrorTest {
   void setNativeErrorText_shouldHandleEmptyStrings() {
     // Given
     ErrorCode code = new TestErrorCodeImpl("TEST_CODE", "Test description");
-    Error error = new TestErrorImpl("Test error", "Initial native text", code);
+    com.rubensgomes.msreqresplib.error.Error error =
+        new TestErrorImpl("Test error", "Initial native text", code);
 
     // When
     error.setNativeErrorText("");
@@ -519,7 +551,8 @@ class ErrorTest {
     assertTrue(error.getNativeErrorText().isEmpty());
 
     // Validation should still pass with empty native text
-    Set<ConstraintViolation<Error>> violations = validator.validate(error);
+    Set<ConstraintViolation<com.rubensgomes.msreqresplib.error.Error>> violations =
+        validator.validate(error);
     assertTrue(violations.isEmpty());
   }
 
@@ -528,7 +561,8 @@ class ErrorTest {
   void setNativeErrorText_shouldHandleLongStrings() {
     // Given
     ErrorCode code = new TestErrorCodeImpl("TEST_CODE", "Test description");
-    Error error = new TestErrorImpl("Test error", "Initial native text", code);
+    com.rubensgomes.msreqresplib.error.Error error =
+        new TestErrorImpl("Test error", "Initial native text", code);
     String longNativeText = "Very long native error text: " + "X".repeat(5000);
 
     // When
@@ -539,7 +573,8 @@ class ErrorTest {
     assertEquals(5029, error.getNativeErrorText().length()); // 29 + 5000
 
     // Validation should still pass
-    Set<ConstraintViolation<Error>> violations = validator.validate(error);
+    Set<ConstraintViolation<com.rubensgomes.msreqresplib.error.Error>> violations =
+        validator.validate(error);
     assertTrue(violations.isEmpty());
   }
 
@@ -548,7 +583,8 @@ class ErrorTest {
   void setNativeErrorText_shouldHandleSpecialCharacters() {
     // Given
     ErrorCode code = new TestErrorCodeImpl("TEST_CODE", "Test description");
-    Error error = new TestErrorImpl("Test error", "Initial native text", code);
+    com.rubensgomes.msreqresplib.error.Error error =
+        new TestErrorImpl("Test error", "Initial native text", code);
     String specialText = "Error with émojis: 🚀 ❌ and unicode: ñáéíóú and symbols: !@#$%^&*() 测试";
 
     // When
@@ -558,7 +594,8 @@ class ErrorTest {
     assertEquals(specialText, error.getNativeErrorText());
 
     // Validation should still pass
-    Set<ConstraintViolation<Error>> violations = validator.validate(error);
+    Set<ConstraintViolation<com.rubensgomes.msreqresplib.error.Error>> violations =
+        validator.validate(error);
     assertTrue(violations.isEmpty());
   }
 
@@ -567,7 +604,8 @@ class ErrorTest {
   void setNativeErrorText_shouldAllowMultipleUpdates() {
     // Given
     ErrorCode code = new TestErrorCodeImpl("TEST_CODE", "Test description");
-    Error error = new TestErrorImpl("Test error", "Initial native text", code);
+    com.rubensgomes.msreqresplib.error.Error error =
+        new TestErrorImpl("Test error", "Initial native text", code);
 
     // When & Then - Multiple updates
     error.setNativeErrorText("First update");
@@ -588,7 +626,8 @@ class ErrorTest {
   void setNativeErrorText_shouldWorkInRealWorldScenarios() {
     // Given - Initial error without native text
     ErrorCode code = new TestErrorCodeImpl("API_CALL_FAILED", "API call failed");
-    Error error = new TestErrorImpl("Failed to call external API", null, code);
+    com.rubensgomes.msreqresplib.error.Error error =
+        new TestErrorImpl("Failed to call external API", null, code);
 
     // When - Adding diagnostic information during error handling
     error.setNativeErrorText(
@@ -602,7 +641,8 @@ class ErrorTest {
     assertEquals("API_CALL_FAILED", error.getErrorCode().getCode());
 
     // Should pass validation
-    Set<ConstraintViolation<Error>> violations = validator.validate(error);
+    Set<ConstraintViolation<com.rubensgomes.msreqresplib.error.Error>> violations =
+        validator.validate(error);
     assertTrue(violations.isEmpty());
 
     // When - Updating with more specific diagnostic info

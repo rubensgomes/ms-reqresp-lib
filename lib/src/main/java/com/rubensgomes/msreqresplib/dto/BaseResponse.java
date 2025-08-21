@@ -18,6 +18,9 @@ package com.rubensgomes.msreqresplib.dto;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.rubensgomes.msreqresplib.Status;
+import com.rubensgomes.msreqresplib.error.Error;
+
 import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
