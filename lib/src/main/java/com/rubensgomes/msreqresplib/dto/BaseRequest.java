@@ -13,11 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.rubensgomes.reqresp.dto;
+package com.rubensgomes.msreqresplib.dto;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
-import lombok.extern.slf4j.Slf4j;
 
 /**
  * Base request DTO containing common identifiers shared by service requests.
@@ -27,7 +29,6 @@ import lombok.extern.slf4j.Slf4j;
  * @author Rubens Gomes
  */
 @Data
-@Slf4j
 public abstract class BaseRequest {
   /** Identifier of the client application originating the request. */
   @NotBlank(message = "clientId is required")
@@ -41,4 +42,6 @@ public abstract class BaseRequest {
   public void logRequest() {
     log.debug("Request - clientId: {}, transactionId: {}", clientId, transactionId);
   }
+
+  private static final Logger log = LoggerFactory.getLogger(BaseRequest.class);
 }

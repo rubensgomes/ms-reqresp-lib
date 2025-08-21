@@ -1,10 +1,5 @@
-# reqresp-lib
-
-This project uses the [JSON Schema Specs](https://json-schema.org/) to define
-JSON schemas for BaseRequest, BaseResponse and Error types. These
-types are converted from the corresponding JSON Schema to Java types.
-And those Java types may be used as base types to be used by microservices
-request and response, where the Error type is used to return errors.
+# ms-reqresp-lib
+Base request and response types to be used by microservices.
 
 ## Display Java Tools Installed
 
