@@ -13,9 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.rubensgomes.reqresp.dto;
+package com.rubensgomes.msreqresplib.dto;
 
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Represents the lifecycle or outcome of processing a request/response.
@@ -25,7 +26,6 @@ import lombok.extern.slf4j.Slf4j;
  *
  * @author Rubens Gomes
  */
-@Slf4j
 public enum Status {
   /** Operation completed successfully. */
   SUCCESS,
@@ -45,6 +45,8 @@ public enum Status {
   TIMEOUT,
   /** Operation was aborted prematurely due to a fatal condition. */
   ABORTED;
+
+  private static final Logger log = LoggerFactory.getLogger(Status.class);
 
   /** Logs the status for debugging purposes. */
   public void logStatus() {
