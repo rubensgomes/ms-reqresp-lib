@@ -29,10 +29,10 @@
  * <p>Foundation classes that provide common structure and functionality:
  *
  * <ul>
- *   <li>{@link com.rubensgomes.msreqresplib.dto.BaseRequest} - Base class for all request DTOs with
+ *   <li>{@link com.rubensgomes.msreqresplib.BaseRequest} - Base class for all request DTOs with
  *       common metadata fields like correlation IDs and timestamps
- *   <li>{@link com.rubensgomes.msreqresplib.dto.BaseResponse} - Base class for all response DTOs
- *       with status information and correlation tracking
+ *   <li>{@link com.rubensgomes.msreqresplib.BaseResponse} - Base class for all response DTOs with
+ *       status information and correlation tracking
  * </ul>
  *
  * <h3>Specialized Response Types</h3>
@@ -185,8 +185,8 @@
  *
  * <ol>
  *   <li><strong>Extend Base Classes:</strong> Always extend {@link
- *       com.rubensgomes.msreqresplib.dto.BaseRequest} and {@link
- *       com.rubensgomes.msreqresplib.dto.BaseResponse} for service-specific DTOs
+ *       com.rubensgomes.msreqresplib.BaseRequest} and {@link
+ *       com.rubensgomes.msreqresplib.BaseResponse} for service-specific DTOs
  *   <li><strong>Use Validation:</strong> Apply Jakarta validation annotations for input validation
  *   <li><strong>Maintain Correlation:</strong> Ensure correlation IDs flow through the entire
  *       request lifecycle
@@ -232,8 +232,8 @@
  *
  * @author Rubens Gomes
  * @since 0.0.1
- * @see com.rubensgomes.msreqresplib.dto.BaseRequest
- * @see com.rubensgomes.msreqresplib.dto.BaseResponse
+ * @see com.rubensgomes.msreqresplib.BaseRequest
+ * @see com.rubensgomes.msreqresplib.BaseResponse
  * @see com.rubensgomes.msreqresplib.dto.ApplicationErrorResponse
  * @see com.rubensgomes.msreqresplib.error
  * @see com.rubensgomes.msreqresplib.Status

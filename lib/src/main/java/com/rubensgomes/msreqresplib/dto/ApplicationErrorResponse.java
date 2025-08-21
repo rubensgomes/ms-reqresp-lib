@@ -15,6 +15,7 @@
  */
 package com.rubensgomes.msreqresplib.dto;
 
+import com.rubensgomes.msreqresplib.BaseResponse;
 import com.rubensgomes.msreqresplib.Status;
 import com.rubensgomes.msreqresplib.error.Error;
 
@@ -36,11 +37,11 @@ import jakarta.validation.constraints.NotNull;
  * <p>Example usage:
  *
  * <pre>{@code
- * Error error = new DatabaseError("Connection timeout", "SQLException: timeout", "DB_001");
+ * Error error = new Error("DB_001", "Database connection failed", "Connection timeout occurred");
  * ApplicationErrorResponse response = new ApplicationErrorResponse(
  *     "client-app",
  *     "txn-12345",
- *     Status.FAILURE,
+ *     Status.ERROR,
  *     "Database operation failed",
  *     error
  * );
@@ -73,18 +74,18 @@ public class ApplicationErrorResponse extends BaseResponse {
    * @param transactionId the correlation identifier used to trace a request across systems. Must
    *     not be null, empty, or contain only whitespace.
    * @param status the overall processing outcome for this response. Must not be null. Typically
-   *     {@link Status#FAILURE} for error responses.
+   *     {@link Status#ERROR} for error responses.
    * @param message a human-readable message describing the error condition. Must not be null,
    *     empty, or contain only whitespace.
    * @param error detailed error information including error codes, native error text, and
    *     additional diagnostic information. Must not be null.
    * @throws jakarta.validation.ConstraintViolationException if any validation constraints are
    *     violated
-   * @see BaseResponse#setClientId(String)
-   * @see BaseResponse#setTransactionId(String)
-   * @see BaseResponse#setStatus(Status)
-   * @see BaseResponse#setMessage(String)
-   * @see BaseResponse#setError(Error)
+   * @see BaseResponse#getClientId()
+   * @see BaseResponse#getTransactionId()
+   * @see BaseResponse#getStatus()
+   * @see BaseResponse#getMessage()
+   * @see BaseResponse#getError()
    */
   public ApplicationErrorResponse(
       @NotBlank String clientId,
@@ -92,9 +93,7 @@ public class ApplicationErrorResponse extends BaseResponse {
       @NotNull Status status,
       @NotBlank String message,
       @NotNull Error error) {
-    this.setClientId(clientId);
-    this.setTransactionId(transactionId);
-    this.setStatus(status);
+    super(clientId, transactionId, status);
     this.setMessage(message);
     this.setError(error);
   }
