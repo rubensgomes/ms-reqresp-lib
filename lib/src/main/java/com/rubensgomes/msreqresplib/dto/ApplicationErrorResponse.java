@@ -15,6 +15,9 @@
  */
 package com.rubensgomes.msreqresplib.dto;
 
+import com.rubensgomes.msreqresplib.Status;
+import com.rubensgomes.msreqresplib.error.Error;
+
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
