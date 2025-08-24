@@ -48,6 +48,7 @@ import jakarta.validation.constraints.NotNull;
  * }</pre>
  *
  * @author Rubens Gomes
+ * @since 0.0.2
  * @see BaseResponse
  * @see Error
  * @see Status

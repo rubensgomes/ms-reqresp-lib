@@ -15,227 +15,296 @@
  */
 
 /**
- * Data Transfer Objects (DTOs) for standardized request and response handling in microservices.
+ * Specialized Data Transfer Objects for microservices communication.
  *
- * <p>This package provides a comprehensive set of base classes and specialized DTOs that enable
- * consistent communication patterns across microservices architectures. The DTOs are designed to
- * promote type safety, validation, and standardization while maintaining flexibility for
- * service-specific requirements.
+ * <p>This package provides purpose-built DTOs that extend and complement the base request/response
+ * framework with specialized functionality for specific communication scenarios. These DTOs are
+ * designed to handle complex data structures that require more than the basic request/response
+ * patterns provided by the core library.
+ *
+ * <h2>Package Overview</h2>
+ *
+ * <p>The DTO package focuses on specialized communication scenarios that require enhanced data
+ * structures beyond the standard {@link com.rubensgomes.msreqresplib.BaseRequest} and {@link
+ * com.rubensgomes.msreqresplib.BaseResponse} classes. Currently, this package specializes in
+ * comprehensive error reporting and communication.
+ *
+ * <p>Key design principles for DTOs in this package:
+ *
+ * <ul>
+ *   <li><strong>Specialized Purpose:</strong> Each DTO is designed for specific communication
+ *       scenarios with enhanced functionality
+ *   <li><strong>Enhanced Validation:</strong> Stricter validation constraints than base classes
+ *       where appropriate
+ *   <li><strong>Comprehensive Information:</strong> Rich data structures that provide complete
+ *       context for their specific use cases
+ *   <li><strong>Cross-Language Support:</strong> Support for both Java and Kotlin implementations
+ *       to accommodate diverse microservices architectures
+ *   <li><strong>Framework Integration:</strong> Seamless integration with validation frameworks,
+ *       serialization libraries, and monitoring systems
+ * </ul>
  *
  * <h2>Core Components</h2>
  *
- * <h3>Base Classes</h3>
+ * <h3>{@link com.rubensgomes.msreqresplib.dto.ApplicationErrorResponse}</h3>
  *
- * <p>Foundation classes that provide common structure and functionality:
- *
- * <ul>
- *   <li>{@link com.rubensgomes.msreqresplib.BaseRequest} - Base class for all request DTOs with
- *       common metadata fields like correlation IDs and timestamps
- *   <li>{@link com.rubensgomes.msreqresplib.BaseResponse} - Base class for all response DTOs with
- *       status information and correlation tracking
- * </ul>
- *
- * <h3>Specialized Response Types</h3>
- *
- * <p>Purpose-built response DTOs for specific scenarios:
+ * <p>A specialized response DTO designed specifically for error communication scenarios. This class
+ * extends {@link com.rubensgomes.msreqresplib.BaseResponse} with enhanced requirements for error
+ * reporting:
  *
  * <ul>
- *   <li>{@link com.rubensgomes.msreqresplib.dto.ApplicationErrorResponse} - Standardized error
- *       response with detailed error information, codes, and debugging context
+ *   <li><strong>Mandatory Error Information:</strong> Unlike the base response where error details
+ *       are optional, this class requires both descriptive messages and structured error details
+ *   <li><strong>Enhanced Validation:</strong> Stricter validation constraints ensure that error
+ *       responses always contain sufficient information for client-side handling
+ *   <li><strong>Structured Error Data:</strong> Integration with the {@link
+ *       com.rubensgomes.msreqresplib.error} package for standardized error reporting
+ *   <li><strong>Client Debugging Support:</strong> Rich error context to facilitate client-side
+ *       debugging and error resolution
  * </ul>
  *
- * <h2>Design Principles</h2>
- *
- * <h3>Consistency</h3>
- *
- * <p>All DTOs follow consistent naming conventions, field structures, and validation patterns:
+ * <p>Key features:
  *
  * <ul>
- *   <li><strong>Common Fields:</strong> Every request includes correlation ID and timestamp
- *   <li><strong>Status Tracking:</strong> All responses include operation status information
- *   <li><strong>Error Handling:</strong> Standardized error response format across all services
- *   <li><strong>Validation:</strong> Built-in validation annotations for data integrity
+ *   <li>Enforces presence of both error message and error details
+ *   <li>Maintains correlation tracking from base response functionality
+ *   <li>Provides standardized error communication across all microservices
+ *   <li>Supports both programmatic error handling and user-facing error messages
  * </ul>
  *
- * <h3>Extensibility</h3>
+ * <h3>{@link com.rubensgomes.msreqresplib.dto.ApplicationError}</h3>
  *
- * <p>DTOs are designed to be easily extended for service-specific needs:
+ * <p>A Kotlin-based implementation of the {@link com.rubensgomes.msreqresplib.error.Error}
+ * interface that provides a concrete data structure for representing application errors:
  *
  * <ul>
- *   <li><strong>Inheritance:</strong> Service-specific DTOs extend base classes
- *   <li><strong>Composition:</strong> Complex data structures can be composed from simpler DTOs
- *   <li><strong>Flexibility:</strong> Generic type parameters allow for type-safe customization
+ *   <li><strong>Comprehensive Error Details:</strong> Encapsulates human-readable descriptions,
+ *       standardized error codes, and optional native error text
+ *   <li><strong>Cross-Language Compatibility:</strong> Kotlin implementation that integrates
+ *       seamlessly with Java-based microservices
+ *   <li><strong>Validation Integration:</strong> Built-in validation constraints ensure data
+ *       integrity
+ *   <li><strong>Flexible Error Context:</strong> Optional native error text supports detailed
+ *       diagnostic information from underlying systems
  * </ul>
  *
- * <h3>Type Safety</h3>
- *
- * <p>Strong typing ensures compile-time safety and clear contracts:
+ * <p>Design benefits:
  *
  * <ul>
- *   <li><strong>Generic Types:</strong> Parameterized types for flexible, type-safe DTOs
- *   <li><strong>Enum Usage:</strong> Status and error codes use enums for type safety
- *   <li><strong>Validation Annotations:</strong> Jakarta validation for runtime safety
+ *   <li>Immutable data class design for thread safety
+ *   <li>Null-safe handling of optional diagnostic information
+ *   <li>Integration with standardized error code framework
+ *   <li>Support for multi-layered error reporting (application + native)
  * </ul>
  *
- * <h2>Usage Patterns</h2>
+ * <h2>Design Patterns and Principles</h2>
  *
- * <h3>Creating Service-Specific Request DTOs</h3>
+ * <h3>Enhanced Validation Strategy</h3>
+ *
+ * <p>DTOs in this package implement stricter validation than their base counterparts:
+ *
+ * <ul>
+ *   <li><strong>Required Error Context:</strong> Error-specific DTOs mandate presence of error
+ *       information where base classes make it optional
+ *   <li><strong>Semantic Validation:</strong> Validation rules that ensure data makes sense in
+ *       context (e.g., error responses must have error details)
+ *   <li><strong>Cross-Field Validation:</strong> Validation that considers relationships between
+ *       multiple fields
+ *   <li><strong>Framework Integration:</strong> Leverages Jakarta Bean Validation for consistent
+ *       validation behavior
+ * </ul>
+ *
+ * <h3>Specialization Over Generalization</h3>
+ *
+ * <p>Rather than creating overly flexible generic structures, this package provides specialized
+ * DTOs for specific scenarios:
+ *
+ * <ul>
+ *   <li><strong>Purpose-Built Classes:</strong> Each DTO is optimized for its specific use case
+ *   <li><strong>Clear Contracts:</strong> Validation and field requirements are explicit and
+ *       enforced
+ *   <li><strong>Type Safety:</strong> Strong typing prevents misuse and provides IDE support
+ *   <li><strong>Self-Documenting:</strong> Class names and structure clearly indicate intended use
+ * </ul>
+ *
+ * <h3>Multi-Language Support</h3>
+ *
+ * <p>The package demonstrates support for polyglot microservices architectures:
+ *
+ * <ul>
+ *   <li><strong>Java Integration:</strong> Full compatibility with Java-based microservices
+ *   <li><strong>Kotlin Support:</strong> Native Kotlin implementations for services built in Kotlin
+ *   <li><strong>Interoperability:</strong> Seamless interaction between Java and Kotlin components
+ *   <li><strong>Common Interfaces:</strong> Shared contracts ensure consistent behavior across
+ *       languages
+ * </ul>
+ *
+ * <h2>Usage Examples</h2>
+ *
+ * <h3>Creating Comprehensive Error Responses</h3>
  *
  * <pre>{@code
- * @Data
- * @EqualsAndHashCode(callSuper = true)
- * @SuperBuilder
- * @NoArgsConstructor
- * @AllArgsConstructor
- * public class UserCreateRequest extends BaseRequest {
- *     @NotBlank(message = "Username is required")
- *     private String username;
+ * // Java usage - creating detailed error response
+ * ApplicationError error = new ApplicationError(
+ *     "Database connection failed",
+ *     ApplicationErrorCode.SYSTEM_DATABASE_CONNECTION,
+ *     "Connection timeout after 30 seconds to database server"
+ * );
  *
- *     @Email(message = "Valid email address is required")
- *     private String email;
- *
- *     @Size(min = 8, message = "Password must be at least 8 characters")
- *     private String password;
- * }
+ * ApplicationErrorResponse response = new ApplicationErrorResponse(
+ *     "order-service",
+ *     "txn-12345",
+ *     Status.ERROR,
+ *     "Unable to process order due to database connectivity issues",
+ *     error
+ * );
  * }</pre>
  *
- * <h3>Creating Service-Specific Response DTOs</h3>
+ * <h3>Kotlin Error Handling</h3>
  *
  * <pre>{@code
- * @Data
- * @EqualsAndHashCode(callSuper = true)
- * @SuperBuilder
- * @NoArgsConstructor
- * @AllArgsConstructor
- * public class UserCreateResponse extends BaseResponse {
- *     private String userId;
- *     private String username;
- *     private String email;
- *     private Instant createdAt;
- * }
+ * // Kotlin usage - leveraging data class features
+ * val error = ApplicationError(
+ *     errorDescription = "Invalid payment method",
+ *     errorCode = ApplicationErrorCode.PAYMENT_METHOD_INVALID,
+ *     nativeErrorText = "Card number failed Luhn algorithm validation"
+ * )
+ *
+ * // Error can be easily copied with modifications
+ * val enhancedError = error.copy(
+ *     nativeErrorText = "${error.nativeErrorText} - Additional context from payment gateway"
+ * )
  * }</pre>
  *
- * <h3>Handling Successful Operations</h3>
+ * <h3>Controller Integration with Enhanced Error Handling</h3>
  *
  * <pre>{@code
- * // In your service controller
- * @PostMapping("/users")
- * public ResponseEntity<UserCreateResponse> createUser(@Valid @RequestBody UserCreateRequest request) {
+ * @PostMapping("/orders")
+ * public ResponseEntity<?> createOrder(@Valid @RequestBody OrderCreateRequest request) {
  *     try {
- *         User user = userService.createUser(request);
+ *         // Process order logic
+ *         return ResponseEntity.ok(processOrder(request));
  *
- *         UserCreateResponse response = UserCreateResponse.builder()
- *             .correlationId(request.getCorrelationId())
- *             .status(Status.SUCCESS)
- *             .timestamp(Instant.now())
- *             .userId(user.getId())
- *             .username(user.getUsername())
- *             .email(user.getEmail())
- *             .createdAt(user.getCreatedAt())
- *             .build();
- *
- *         return ResponseEntity.ok(response);
  *     } catch (ValidationException e) {
- *         return handleValidationError(request, e);
+ *         ApplicationError error = new ApplicationError(
+ *             e.getMessage(),
+ *             ApplicationErrorCode.VALIDATION_REQUIRED_FIELD,
+ *             e.getFieldErrors().toString()
+ *         );
+ *
+ *         ApplicationErrorResponse errorResponse = new ApplicationErrorResponse(
+ *             request.getClientId(),
+ *             request.getTransactionId(),
+ *             Status.ERROR,
+ *             "Order validation failed",
+ *             error
+ *         );
+ *
+ *         return ResponseEntity.badRequest().body(errorResponse);
+ *
+ *     } catch (DatabaseException e) {
+ *         ApplicationError error = new ApplicationError(
+ *             "Database operation failed",
+ *             ApplicationErrorCode.SYSTEM_DATABASE_CONNECTION,
+ *             e.getNativeSqlException().getMessage()
+ *         );
+ *
+ *         ApplicationErrorResponse errorResponse = new ApplicationErrorResponse(
+ *             request.getClientId(),
+ *             request.getTransactionId(),
+ *             Status.ERROR,
+ *             "Unable to save order",
+ *             error
+ *         );
+ *
+ *         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+ *             .body(errorResponse);
  *     }
  * }
  * }</pre>
  *
- * <h3>Handling Error Scenarios</h3>
+ * <h3>Error Response Serialization</h3>
  *
  * <pre>{@code
- * // Error handling method
- * private ResponseEntity<ApplicationErrorResponse> handleValidationError(
- *         BaseRequest request, ValidationException e) {
- *
- *     ApplicationErrorResponse errorResponse = ApplicationErrorResponse.builder()
- *         .correlationId(request.getCorrelationId())
- *         .status(Status.ERROR)
- *         .errorCode(ApplicationErrorCode.VALIDATION_REQUIRED_FIELD.getCode())
- *         .errorMessage(ApplicationErrorCode.VALIDATION_REQUIRED_FIELD.getDescription())
- *         .errorDetails(e.getMessage())
- *         .timestamp(Instant.now())
- *         .build();
- *
- *     return ResponseEntity.badRequest().body(errorResponse);
+ * // JSON serialization example
+ * {
+ *   "clientId": "order-service",
+ *   "transactionId": "txn-12345",
+ *   "status": "ERROR",
+ *   "timestamp": "2025-01-15T10:30:00Z",
+ *   "message": "Unable to process order due to database connectivity issues",
+ *   "error": {
+ *     "errorDescription": "Database connection failed",
+ *     "errorCode": {
+ *       "code": "SYSGN003",
+ *       "description": "Database connection failure"
+ *     },
+ *     "nativeErrorText": "Connection timeout after 30 seconds to database server"
+ *   }
  * }
- * }</pre>
- *
- * <h3>Request Correlation and Tracing</h3>
- *
- * <pre>{@code
- * // Generate correlation ID for request tracking
- * UserCreateRequest request = UserCreateRequest.builder()
- *     .correlationId(UUID.randomUUID().toString())
- *     .timestamp(Instant.now())
- *     .username("john.doe")
- *     .email("john.doe@example.com")
- *     .password("securePassword123")
- *     .build();
- *
- * // The correlation ID flows through the entire request lifecycle
- * logger.info("Processing user creation request: {}", request.getCorrelationId());
  * }</pre>
  *
  * <h2>Integration Guidelines</h2>
  *
- * <h3>Service Implementation</h3>
- *
- * <p>When implementing microservices using these DTOs:
+ * <p>To effectively integrate these specialized DTOs into your microservices:
  *
  * <ol>
- *   <li><strong>Extend Base Classes:</strong> Always extend {@link
- *       com.rubensgomes.msreqresplib.BaseRequest} and {@link
- *       com.rubensgomes.msreqresplib.BaseResponse} for service-specific DTOs
- *   <li><strong>Use Validation:</strong> Apply Jakarta validation annotations for input validation
- *   <li><strong>Maintain Correlation:</strong> Ensure correlation IDs flow through the entire
- *       request lifecycle
- *   <li><strong>Handle Errors Consistently:</strong> Use {@link
- *       com.rubensgomes.msreqresplib.dto.ApplicationErrorResponse} for all error scenarios
- *   <li><strong>Follow Naming Conventions:</strong> Use clear, descriptive names for
- *       service-specific DTOs
+ *   <li><strong>Use Appropriate Specializations:</strong> Choose {@link
+ *       com.rubensgomes.msreqresplib.dto.ApplicationErrorResponse} for error scenarios where
+ *       comprehensive error information is required
+ *   <li><strong>Implement Comprehensive Error Handling:</strong> Leverage {@link
+ *       com.rubensgomes.msreqresplib.dto.ApplicationError} to provide both application-level and
+ *       native system error details
+ *   <li><strong>Maintain Validation Standards:</strong> Ensure all required fields are populated
+ *       and validation constraints are met
+ *   <li><strong>Support Multi-Language Teams:</strong> Use appropriate language implementations
+ *       (Java vs Kotlin) based on your team's preferences and existing codebase
+ *   <li><strong>Consistent Error Communication:</strong> Standardize error response formats across
+ *       all microservices using these DTOs
+ *   <li><strong>Monitor Error Patterns:</strong> Use the structured error data for monitoring and
+ *       alerting on error patterns and trends
  * </ol>
  *
- * <h3>Client Implementation</h3>
+ * <h2>Extension Guidelines</h2>
  *
- * <p>When consuming services that use these DTOs:
- *
- * <ol>
- *   <li><strong>Generate Correlation IDs:</strong> Always provide unique correlation IDs for
- *       tracking
- *   <li><strong>Handle All Response Types:</strong> Be prepared to handle both success and error
- *       responses
- *   <li><strong>Validate Inputs:</strong> Perform client-side validation before sending requests
- *   <li><strong>Log Correlations:</strong> Use correlation IDs for distributed tracing and
- *       debugging
- * </ol>
- *
- * <h2>Best Practices</h2>
+ * <p>When adding new specialized DTOs to this package:
  *
  * <ul>
- *   <li><strong>Immutability:</strong> Use builders and final fields where possible for thread
- *       safety
- *   <li><strong>Validation:</strong> Apply appropriate validation annotations to ensure data
- *       integrity
- *   <li><strong>Documentation:</strong> Document all fields with clear JavaDoc comments
- *   <li><strong>Versioning:</strong> Consider backward compatibility when modifying existing DTOs
- *   <li><strong>Testing:</strong> Create comprehensive unit tests for all custom DTOs
- *   <li><strong>Serialization:</strong> Ensure DTOs are properly serializable for JSON/XML
- *       processing
+ *   <li><strong>Follow Naming Conventions:</strong> Use descriptive names that clearly indicate the
+ *       DTO's purpose and specialization
+ *   <li><strong>Extend Base Classes:</strong> Build upon {@link
+ *       com.rubensgomes.msreqresplib.BaseRequest} or {@link
+ *       com.rubensgomes.msreqresplib.BaseResponse} when appropriate
+ *   <li><strong>Implement Enhanced Validation:</strong> Add validation constraints that make sense
+ *       for the specific use case
+ *   <li><strong>Document Purpose:</strong> Clearly document what scenarios the DTO is designed for
+ *       and how it differs from base classes
+ *   <li><strong>Consider Language Choice:</strong> Choose Java or Kotlin based on the target
+ *       audience and integration requirements
+ *   <li><strong>Maintain Consistency:</strong> Follow the same patterns established by existing
+ *       DTOs in this package
  * </ul>
  *
- * <h2>Integration with Error Framework</h2>
+ * <h2>Performance Considerations</h2>
  *
- * <p>This package integrates seamlessly with the error handling framework provided in {@link
- * com.rubensgomes.msreqresplib.error}, enabling consistent error responses across all microservices
- * using standardized error codes and descriptions.
+ * <ul>
+ *   <li><strong>Immutable Design:</strong> Both Java and Kotlin implementations use immutable
+ *       patterns for thread safety and caching benefits
+ *   <li><strong>Validation Caching:</strong> Validation results can be cached due to immutable
+ *       nature
+ *   <li><strong>Serialization Optimization:</strong> DTOs are optimized for JSON
+ *       serialization/deserialization performance
+ *   <li><strong>Memory Efficiency:</strong> Structured error data prevents string concatenation and
+ *       improves memory usage patterns
+ * </ul>
  *
  * @author Rubens Gomes
- * @since 0.0.1
+ * @version 0.0.4
+ * @since 0.0.2
  * @see com.rubensgomes.msreqresplib.BaseRequest
  * @see com.rubensgomes.msreqresplib.BaseResponse
- * @see com.rubensgomes.msreqresplib.dto.ApplicationErrorResponse
  * @see com.rubensgomes.msreqresplib.error
- * @see com.rubensgomes.msreqresplib.Status
+ * @see com.rubensgomes.msreqresplib.dto.ApplicationErrorResponse
+ * @see com.rubensgomes.msreqresplib.dto.ApplicationError
  */
 package com.rubensgomes.msreqresplib.dto;

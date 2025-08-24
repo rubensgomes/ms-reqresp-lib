@@ -40,7 +40,7 @@ Base request and response types to be used by microservices.
 ```
 
 ```shell
-git commit -m "updated gradle-catalog" -a
+git commit -m "fixes and refactorings" -a
 git push
 ```
 

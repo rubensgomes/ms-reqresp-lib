@@ -274,10 +274,31 @@
  *       documentation
  *   <li><strong>0.0.3:</strong> Immutable design pattern, enhanced correlation tracking, and
  *       comprehensive validation framework integration
+ *   <li><strong>0.0.4:</strong> Production-ready release with enhanced error handling,
+ *       comprehensive unit testing, and improved documentation coverage
+ * </ul>
+ *
+ * <h2>Dependencies and Requirements</h2>
+ *
+ * <p>This library has minimal dependencies to ensure lightweight integration:
+ *
+ * <ul>
+ *   <li><strong>Java 11+:</strong> Minimum Java version required
+ *   <li><strong>Jakarta Bean Validation:</strong> For runtime validation support
+ *   <li><strong>SLF4J:</strong> For logging abstraction
+ *   <li><strong>Lombok:</strong> For reducing boilerplate code (compile-time only)
+ * </ul>
+ *
+ * <p>Optional dependencies for enhanced functionality:
+ *
+ * <ul>
+ *   <li><strong>Spring Boot:</strong> For controller integration and auto-configuration
+ *   <li><strong>Jackson:</strong> For JSON serialization/deserialization
+ *   <li><strong>OpenTelemetry:</strong> For distributed tracing integration
  * </ul>
  *
  * @author Rubens Gomes
- * @version 0.0.3
+ * @version 0.0.4
  * @since 0.0.1
  * @see com.rubensgomes.msreqresplib.BaseRequest
  * @see com.rubensgomes.msreqresplib.BaseResponse
