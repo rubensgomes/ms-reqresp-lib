@@ -117,12 +117,12 @@ class BaseResponseTest {
     }
 
     @Override
-    public String getErrorDescription() {
+    public String errorDescription() {
       return errorDescription;
     }
 
     @Override
-    public String getNativeErrorText() {
+    public String nativeErrorText() {
       return nativeErrorText;
     }
 
@@ -132,7 +132,7 @@ class BaseResponseTest {
     }
 
     @Override
-    public ErrorCode getErrorCode() {
+    public ErrorCode errorCode() {
       return new TestErrorCodeImpl(errorCode, errorDescription);
     }
 

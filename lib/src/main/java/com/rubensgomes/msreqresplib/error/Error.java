@@ -81,7 +81,7 @@ public interface Error {
    * @return the error description, never null or blank
    */
   @NotBlank
-  String getErrorDescription();
+  String errorDescription();
 
   /**
    * Returns the native error text, which may include system-specific details.
@@ -96,7 +96,7 @@ public interface Error {
    * @return the native error text, or null if not available
    */
   @Nullable
-  String getNativeErrorText();
+  String nativeErrorText();
 
   /**
    * Returns the structured error code associated with this error.
@@ -141,5 +141,5 @@ public interface Error {
    * @see ErrorCode#getDescription()
    */
   @NotNull
-  ErrorCode getErrorCode();
+  ErrorCode errorCode();
 }
