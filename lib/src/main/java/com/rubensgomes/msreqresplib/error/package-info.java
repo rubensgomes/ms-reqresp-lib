@@ -24,14 +24,12 @@
  *
  * <h2>Package Overview</h2>
  *
- * <p>The error handling framework is built on three core components that work together to provide a
+ * <p>The error handling framework is built on two core components that work together to provide a
  * complete error management solution:
  *
  * <ul>
  *   <li><strong>Error Code Contracts:</strong> Standardized interfaces for defining error
  *       identifiers with both machine-readable codes and human-readable descriptions
- *   <li><strong>Hierarchical Error Taxonomy:</strong> Organized error categorization system with
- *       consistent naming conventions for easy classification and handling
  *   <li><strong>Error Data Structures:</strong> Comprehensive error information containers that
  *       support both structured error reporting and diagnostic information
  * </ul>
@@ -58,42 +56,6 @@
  *   <li>Facilitates automated error processing and routing
  * </ul>
  *
- * <h3>{@link com.rubensgomes.msreqresplib.error.ApplicationErrorCode}</h3>
- *
- * <p>A comprehensive enumeration of standardized error codes organized in a hierarchical taxonomy.
- * This enum implements the {@link ErrorCode} interface and provides a complete set of predefined
- * error codes for common microservices scenarios.
- *
- * <p>Error Code Categories:
- *
- * <ul>
- *   <li><strong>BUSGN### - Business Logic Errors:</strong> Domain-specific constraint violations,
- *       invalid operation states, and business rule failures
- *   <li><strong>PAYGN### - Payment Processing Errors:</strong> Financial transaction failures,
- *       payment gateway issues, and billing-related problems
- *   <li><strong>RESGN### - Resource Management Errors:</strong> Resource access denials,
- *       availability issues, quota violations, and capacity limitations
- *   <li><strong>SECGN### - Security Errors:</strong> Authentication failures, authorization
- *       violations, token issues, and session management problems
- *   <li><strong>SYSGN### - System Errors:</strong> Infrastructure failures, database connectivity
- *       issues, external service unavailability, and internal server errors
- *   <li><strong>VALGN### - Validation Errors:</strong> Input validation failures, format
- *       violations, data integrity issues, and constraint violations
- *   <li><strong>XXXMS### - Service-Specific Errors:</strong> Microservice-specific error codes
- *       (e.g., USRMS for user management service)
- * </ul>
- *
- * <p>Benefits of the hierarchical naming convention:
- *
- * <ul>
- *   <li><strong>Easy Categorization:</strong> Errors can be grouped and handled by category prefix
- *   <li><strong>Scalable Design:</strong> New error codes can be added without naming conflicts
- *   <li><strong>Monitoring Integration:</strong> Error metrics can be aggregated by category
- *   <li><strong>Documentation Organization:</strong> Error handling guides can be structured by
- *       type
- *   <li><strong>Automated Processing:</strong> Error routing and handling can be category-based
- * </ul>
- *
  * <h3>{@link com.rubensgomes.msreqresplib.error.Error}</h3>
  *
  * <p>Defines the structure for comprehensive error information that can be returned by system
@@ -107,6 +69,14 @@
  *   <li><strong>Validation Support:</strong> Built-in constraints ensure data integrity
  * </ul>
  *
+ * <p>The Error interface uses modern Java patterns with method names that match record components:
+ *
+ * <ul>
+ *   <li>{@code errorDescription()} - Returns the human-readable error description
+ *   <li>{@code errorCode()} - Returns the structured ErrorCode object
+ *   <li>{@code nativeErrorText()} - Returns optional native error information
+ * </ul>
+ *
  * <h2>Design Principles</h2>
  *
  * <h3>Consistency and Standardization</h3>
@@ -115,9 +85,21 @@
  *
  * <ul>
  *   <li><strong>Uniform Structure:</strong> All errors follow the same data model
- *   <li><strong>Predictable Naming:</strong> Error codes use consistent hierarchical naming
+ *   <li><strong>Predictable Interface:</strong> Error interfaces use consistent method naming
  *   <li><strong>Standard Responses:</strong> Error responses have consistent format across services
  *   <li><strong>Validation Integration:</strong> All error components are validated for integrity
+ * </ul>
+ *
+ * <h3>Modern Java Design</h3>
+ *
+ * <p>The framework leverages modern Java features:
+ *
+ * <ul>
+ *   <li><strong>Record Support:</strong> Error implementations can use Java records for
+ *       immutability
+ *   <li><strong>Interface Design:</strong> Clean interfaces that work well with records
+ *   <li><strong>Annotation-Driven Validation:</strong> Uses Jakarta validation annotations
+ *   <li><strong>Type Safety:</strong> Strong typing prevents runtime errors
  * </ul>
  *
  * <h3>Extensibility and Flexibility</h3>
@@ -125,13 +107,13 @@
  * <p>The framework supports growth and customization:
  *
  * <ul>
- *   <li><strong>Service-Specific Codes:</strong> Services can define their own error codes using
- *       the XXXMS### pattern
- *   <li><strong>Category Extension:</strong> New error categories can be added as needed
- *   <li><strong>Custom Implementations:</strong> Services can implement custom error data
+ *   <li><strong>Custom Error Codes:</strong> Services can implement their own ErrorCode types
+ *   <li><strong>Custom Error Implementations:</strong> Services can implement custom error data
  *       structures while maintaining interface compatibility
- *   <li><strong>Backward Compatibility:</strong> New error codes don't break existing error
- *       handling
+ *   <li><strong>Backward Compatibility:</strong> New error implementations don't break existing
+ *       error handling
+ *   <li><strong>Framework Integration:</strong> Works seamlessly with Spring Boot and other
+ *       frameworks
  * </ul>
  *
  * <h3>Developer Experience</h3>
@@ -140,56 +122,92 @@
  *
  * <ul>
  *   <li><strong>Type Safety:</strong> Strong typing prevents runtime errors
- *   <li><strong>IDE Support:</strong> Enum-based error codes provide autocomplete and documentation
- *   <li><strong>Clear Documentation:</strong> Every error code includes descriptive text
+ *   <li><strong>IDE Support:</strong> Interface-based design provides autocomplete and
+ *       documentation
+ *   <li><strong>Clear Documentation:</strong> Comprehensive Javadoc for all components
  *   <li><strong>Validation Feedback:</strong> Immediate feedback on invalid error data
+ *   <li><strong>Record Compatibility:</strong> Modern Java records work seamlessly with interfaces
  * </ul>
  *
  * <h2>Usage Examples</h2>
  *
- * <h3>Using Predefined Error Codes</h3>
+ * <h3>Implementing Custom Error Codes</h3>
  *
  * <pre>{@code
- * // Using a validation error code
- * ErrorCode validationError = ApplicationErrorCode.VALIDATION_REQUIRED_FIELD;
- * String code = validationError.getCode();         // "VALGN001"
- * String description = validationError.getDescription(); // "Required field is missing"
+ * // Simple error code implementation
+ * public enum ApplicationErrorCodes implements ErrorCode {
+ *     VALIDATION_REQUIRED_FIELD("VALGN001", "Required field is missing"),
+ *     VALIDATION_INVALID_FORMAT("VALGN002", "Invalid field format"),
+ *     SECURITY_AUTHENTICATION_FAILED("SECGN001", "Authentication failed"),
+ *     SYSTEM_DATABASE_ERROR("SYSGN001", "Database connection failed");
  *
- * // Using in error responses
- * ApplicationErrorResponse response = new ApplicationErrorResponse(
- *     clientId,
- *     transactionId,
- *     Status.ERROR,
- *     validationError.getCode(),
- *     validationError.getDescription(),
- *     "The 'username' field is required",
- *     Instant.now()
- * );
- * }</pre>
+ *     private final String code;
+ *     private final String description;
  *
- * <h3>Error Categorization and Handling</h3>
- *
- * <pre>{@code
- * // Handle errors by category
- * public ResponseEntity<?> handleError(String errorCode) {
- *     if (errorCode.startsWith("VALGN")) {
- *         // Handle validation errors - return 400 Bad Request
- *         return ResponseEntity.badRequest().body(createErrorResponse(errorCode));
- *     } else if (errorCode.startsWith("SECGN")) {
- *         // Handle security errors - return 401/403
- *         return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
- *             .body(createErrorResponse(errorCode));
- *     } else if (errorCode.startsWith("SYSGN")) {
- *         // Handle system errors - return 500 Internal Server Error
- *         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
- *             .body(createErrorResponse(errorCode));
+ *     ApplicationErrorCodes(String code, String description) {
+ *         this.code = code;
+ *         this.description = description;
  *     }
- *     // Default handling
- *     return ResponseEntity.badRequest().body(createErrorResponse(errorCode));
+ *
+ *     @Override
+ *     public String getCode() { return code; }
+ *
+ *     @Override
+ *     public String getDescription() { return description; }
  * }
  * }</pre>
  *
- * <h3>Custom Service-Specific Error Codes</h3>
+ * <h3>Using Error Records</h3>
+ *
+ * <pre>{@code
+ * // Modern Java record implementation of Error interface
+ * public record ApplicationError(
+ *     @NotBlank String errorDescription,
+ *     @NotNull ErrorCode errorCode,
+ *     @Nullable String nativeErrorText
+ * ) implements Error {
+ *     // Record automatically implements interface methods through component names
+ * }
+ *
+ * // Usage example
+ * ErrorCode code = ApplicationErrorCodes.VALIDATION_REQUIRED_FIELD;
+ * ApplicationError error = new ApplicationError(
+ *     "Username is required",
+ *     code,
+ *     "Field validation failed: username cannot be null or empty"
+ * );
+ *
+ * // Access error information
+ * String description = error.errorDescription();  // "Username is required"
+ * String codeId = error.errorCode().getCode();    // "VALGN001"
+ * String nativeText = error.nativeErrorText();    // "Field validation..."
+ * }</pre>
+ *
+ * <h3>Error Handling Patterns</h3>
+ *
+ * <pre>{@code
+ * // Handle errors by code pattern
+ * public ResponseEntity<?> handleError(Error error) {
+ *     String errorCode = error.errorCode().getCode();
+ *
+ *     if (errorCode.startsWith("VALGN")) {
+ *         // Handle validation errors - return 400 Bad Request
+ *         return ResponseEntity.badRequest().body(createErrorResponse(error));
+ *     } else if (errorCode.startsWith("SECGN")) {
+ *         // Handle security errors - return 401/403
+ *         return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+ *             .body(createErrorResponse(error));
+ *     } else if (errorCode.startsWith("SYSGN")) {
+ *         // Handle system errors - return 500 Internal Server Error
+ *         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+ *             .body(createErrorResponse(error));
+ *     }
+ *     // Default handling
+ *     return ResponseEntity.badRequest().body(createErrorResponse(error));
+ * }
+ * }</pre>
+ *
+ * <h3>Service-Specific Error Implementations</h3>
  *
  * <pre>{@code
  * // Define service-specific error codes
@@ -213,31 +231,14 @@
  *     @Override
  *     public String getDescription() { return description; }
  * }
- * }</pre>
  *
- * <h3>Error Monitoring and Metrics</h3>
- *
- * <pre>{@code
- * // Count errors by category for monitoring
- * public void recordErrorMetric(String errorCode) {
- *     String category = errorCode.substring(0, 5); // Extract category prefix
- *
- *     switch (category) {
- *         case "VALGN":
- *             validationErrorCounter.increment();
- *             break;
- *         case "SECGN":
- *             securityErrorCounter.increment();
- *             break;
- *         case "SYSGN":
- *             systemErrorCounter.increment();
- *             break;
- *         // Add other categories as needed
- *     }
- *
- *     // Also record specific error code
- *     errorCodeCounter.increment(Tags.of("error_code", errorCode));
- * }
+ * // Use with error records
+ * UserServiceErrorCode code = UserServiceErrorCode.USER_NOT_FOUND;
+ * ApplicationError error = new ApplicationError(
+ *     "The requested user could not be found",
+ *     code,
+ *     "Database query returned no results for userId: 12345"
+ * );
  * }</pre>
  *
  * <h2>Integration Guidelines</h2>
@@ -245,20 +246,18 @@
  * <p>To effectively integrate this error handling framework:
  *
  * <ol>
- *   <li><strong>Use Standard Error Codes:</strong> Leverage predefined {@link ApplicationErrorCode}
- *       values whenever possible before creating custom ones
- *   <li><strong>Follow Naming Conventions:</strong> Use the hierarchical naming pattern for any
- *       service-specific error codes (XXXMS###)
- *   <li><strong>Implement Consistent Responses:</strong> Use standardized error response DTOs that
- *       include error codes and descriptions
- *   <li><strong>Add Error Monitoring:</strong> Implement metrics collection for error categories
- *       and specific error codes
- *   <li><strong>Document Service Errors:</strong> Document any service-specific error codes and
- *       their meanings
- *   <li><strong>Handle by Category:</strong> Implement error handling logic that can process errors
- *       by category prefix
- *   <li><strong>Validate Error Data:</strong> Ensure all error information passes validation
- *       constraints
+ *   <li><strong>Implement ErrorCode Interface:</strong> Create enums or classes that implement the
+ *       ErrorCode interface for your error codes
+ *   <li><strong>Use Error Records:</strong> Leverage Java records that implement the Error
+ *       interface for immutable error data structures
+ *   <li><strong>Follow Naming Conventions:</strong> Use consistent prefixes for error codes (e.g.,
+ *       VALGN for validation, SECGN for security)
+ *   <li><strong>Implement Validation:</strong> Use Jakarta validation annotations to ensure error
+ *       data integrity
+ *   <li><strong>Add Error Monitoring:</strong> Implement metrics collection for error tracking
+ *   <li><strong>Document Error Codes:</strong> Provide clear descriptions for all error codes
+ *   <li><strong>Handle by Pattern:</strong> Implement error handling logic that processes errors by
+ *       code patterns or categories
  * </ol>
  *
  * <h2>Best Practices</h2>
@@ -268,8 +267,10 @@
  *       application ecosystem
  *   <li><strong>Meaningful Descriptions:</strong> Write clear, actionable error descriptions that
  *       help users understand what went wrong
- *   <li><strong>Consistent Categorization:</strong> Place new error codes in appropriate categories
- *       based on their nature
+ *   <li><strong>Consistent Categorization:</strong> Use consistent prefixes for error code
+ *       categories
+ *   <li><strong>Immutable Design:</strong> Use records or immutable classes for error data
+ *   <li><strong>Validation Integration:</strong> Always validate error data using annotations
  *   <li><strong>Backward Compatibility:</strong> Avoid changing existing error codes; add new ones
  *       instead
  *   <li><strong>Logging Integration:</strong> Log error codes along with detailed diagnostic
@@ -278,12 +279,26 @@
  *       error codes for programmatic handling
  * </ul>
  *
+ * <h2>Framework Integration</h2>
+ *
+ * <p>This error handling framework integrates seamlessly with:
+ *
+ * <ul>
+ *   <li><strong>Spring Boot:</strong> Error handling in controllers and services
+ *   <li><strong>Jakarta Validation:</strong> Automatic validation of error data
+ *   <li><strong>Microservices:</strong> Consistent error communication between services
+ *   <li><strong>Monitoring Tools:</strong> Error code-based metrics and alerting
+ *   <li><strong>API Documentation:</strong> Clear error response documentation
+ * </ul>
+ *
  * @author Rubens Gomes
- * @version 0.0.4
+ * @version 0.0.7
  * @since 0.0.1
  * @see com.rubensgomes.msreqresplib.error.ErrorCode
- * @see com.rubensgomes.msreqresplib.error.ApplicationErrorCode
  * @see com.rubensgomes.msreqresplib.error.Error
- * @see com.rubensgomes.msreqresplib.dto.ApplicationErrorResponse
+ * @see com.rubensgomes.msreqresplib.dto.ApplicationError
+ * @see jakarta.validation.constraints.NotBlank
+ * @see jakarta.validation.constraints.NotNull
+ * @see jakarta.annotation.Nullable
  */
 package com.rubensgomes.msreqresplib.error;
