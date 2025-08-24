@@ -82,11 +82,6 @@ public class ApplicationErrorResponse extends BaseResponse {
    *     additional diagnostic information. Must not be null.
    * @throws jakarta.validation.ConstraintViolationException if any validation constraints are
    *     violated
-   * @see BaseResponse#getClientId()
-   * @see BaseResponse#getTransactionId()
-   * @see BaseResponse#getStatus()
-   * @see BaseResponse#getMessage()
-   * @see BaseResponse#getError()
    */
   public ApplicationErrorResponse(
       @NotBlank String clientId,

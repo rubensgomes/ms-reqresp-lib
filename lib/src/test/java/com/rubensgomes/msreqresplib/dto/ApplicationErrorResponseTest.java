@@ -108,12 +108,12 @@ class ApplicationErrorResponseTest {
     }
 
     @Override
-    public String getErrorDescription() {
+    public String errorDescription() {
       return errorDescription;
     }
 
     @Override
-    public String getNativeErrorText() {
+    public String nativeErrorText() {
       return nativeErrorText;
     }
 
@@ -123,7 +123,7 @@ class ApplicationErrorResponseTest {
     }
 
     @Override
-    public ErrorCode getErrorCode() {
+    public ErrorCode errorCode() {
       return errorCode;
     }
 
@@ -546,11 +546,11 @@ class ApplicationErrorResponseTest {
     assertNotNull(response.getError());
     assertEquals(
         "Database connection failed after multiple retry attempts",
-        response.getError().getErrorDescription());
-    assertEquals("COMPLEX_DB_CONNECTION_TIMEOUT", response.getError().getErrorCode().getCode());
+        response.getError().errorDescription());
+    assertEquals("COMPLEX_DB_CONNECTION_TIMEOUT", response.getError().errorCode().getCode());
     assertEquals(
         "Database connection timeout with retry exhausted",
-        response.getError().getErrorCode().getDescription());
+        response.getError().errorCode().getDescription());
 
     // Should pass validation
     assertTrue(validator.validate(response).isEmpty());

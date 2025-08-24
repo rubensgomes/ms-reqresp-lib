@@ -15,9 +15,6 @@
  */
 package com.rubensgomes.msreqresplib;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.rubensgomes.msreqresplib.error.Error;
 
 import jakarta.annotation.Nullable;
@@ -25,6 +22,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Abstract base class for all response DTOs in the microservices architecture.
@@ -378,6 +376,7 @@ import lombok.RequiredArgsConstructor;
  * @see jakarta.validation.constraints.NotBlank
  * @see jakarta.validation.constraints.NotNull
  */
+@Slf4j
 @Data
 @RequiredArgsConstructor
 public abstract class BaseResponse {
@@ -409,6 +408,4 @@ public abstract class BaseResponse {
         message,
         error);
   }
-
-  private static final Logger log = LoggerFactory.getLogger(BaseResponse.class);
 }

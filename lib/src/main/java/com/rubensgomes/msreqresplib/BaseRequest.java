@@ -15,11 +15,9 @@
  */
 package com.rubensgomes.msreqresplib;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Abstract base class for all request DTOs in the microservices architecture.
@@ -229,6 +227,7 @@ import lombok.Data;
  * @see lombok.Data
  * @see BaseResponse
  */
+@Slf4j
 @Data
 public abstract class BaseRequest {
   /** Identifier of the client application originating the request. */
@@ -243,6 +242,4 @@ public abstract class BaseRequest {
   public void logRequest() {
     log.debug("Request - clientId: {}, transactionId: {}", clientId, transactionId);
   }
-
-  private static final Logger log = LoggerFactory.getLogger(BaseRequest.class);
 }

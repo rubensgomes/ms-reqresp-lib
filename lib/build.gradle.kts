@@ -134,18 +134,18 @@ java {
 }
 
 tasks.compileJava {
-    // Ensure we have a clean code prior to compilateion
+    // Ensure we have a clean code prior to compilation
     dependsOn("spotlessApply")
 }
 
 tasks.javadoc {
+    // Exclude Kotlin files from Javadoc since Javadoc can't process them
+    exclude("**/*.kt")
+    source = sourceSets.main.get().allJava
+
     if (JavaVersion.current().isJava9Compatible) {
         (options as StandardJavadocDocletOptions).addBooleanOption("html5", true)
     }
-}
-
-tasks.test {
-    useJUnitPlatform()
 }
 
 tasks.jar {
@@ -167,6 +167,10 @@ tasks.jar {
             ),
         )
     }
+}
+
+tasks.test {
+    useJUnitPlatform()
 }
 
 // ----------------------------------------------------------------------------
