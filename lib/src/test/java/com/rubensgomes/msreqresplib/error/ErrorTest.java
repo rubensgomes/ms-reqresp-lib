@@ -35,12 +35,12 @@ import jakarta.validation.ValidatorFactory;
  * implementations that cover all the interface methods and validation constraints.
  *
  * @author Rubens Gomes
+ * @since 0.0.1
  */
 @DisplayName("Error Interface Tests")
 class ErrorTest {
 
   private Validator validator;
-  private ValidatorFactory factory;
   private com.rubensgomes.msreqresplib.error.Error error;
 
   /** Test implementation of the ErrorCode interface for testing purposes. */
@@ -86,7 +86,7 @@ class ErrorTest {
   /** Test implementation of the Error interface for testing purposes. */
   private static class TestErrorImpl implements com.rubensgomes.msreqresplib.error.Error {
     private final String errorDescription;
-    private String nativeErrorText;
+    private final String nativeErrorText;
     private final ErrorCode errorCode;
 
     public TestErrorImpl(String errorDescription, String nativeErrorText, ErrorCode errorCode) {
@@ -103,11 +103,6 @@ class ErrorTest {
     @Override
     public String getNativeErrorText() {
       return nativeErrorText;
-    }
-
-    @Override
-    public void setNativeErrorText(String nativeErrorText) {
-      this.nativeErrorText = nativeErrorText;
     }
 
     @Override
@@ -138,9 +133,65 @@ class ErrorTest {
     }
   }
 
+  /** Mutable test implementation for scenarios that require modification. */
+  private static class MutableTestErrorImpl implements com.rubensgomes.msreqresplib.error.Error {
+    private final String errorDescription;
+    private String nativeErrorText;
+    private final ErrorCode errorCode;
+
+    public MutableTestErrorImpl(
+        String errorDescription, String nativeErrorText, ErrorCode errorCode) {
+      this.errorDescription = errorDescription;
+      this.nativeErrorText = nativeErrorText;
+      this.errorCode = errorCode;
+    }
+
+    @Override
+    public String getErrorDescription() {
+      return errorDescription;
+    }
+
+    @Override
+    public String getNativeErrorText() {
+      return nativeErrorText;
+    }
+
+    @Override
+    public ErrorCode getErrorCode() {
+      return errorCode;
+    }
+
+    // Additional method for testing - not part of the Error interface
+    public void setNativeErrorText(String nativeErrorText) {
+      this.nativeErrorText = nativeErrorText;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+      MutableTestErrorImpl that = (MutableTestErrorImpl) o;
+      return java.util.Objects.equals(errorDescription, that.errorDescription)
+          && java.util.Objects.equals(nativeErrorText, that.nativeErrorText)
+          && java.util.Objects.equals(errorCode, that.errorCode);
+    }
+
+    @Override
+    public int hashCode() {
+      return java.util.Objects.hash(errorDescription, nativeErrorText, errorCode);
+    }
+
+    @Override
+    public String toString() {
+      return String.format(
+          "MutableTestErrorImpl{errorDescription='%s', nativeErrorText='%s', errorCode=%s}",
+          errorDescription, nativeErrorText, errorCode);
+    }
+  }
+
   @BeforeEach
   void setUp() {
-    factory = Validation.buildDefaultValidatorFactory();
+    ValidatorFactory factory = Validation.buildDefaultValidatorFactory();
     validator = factory.getValidator();
 
     ErrorCode testErrorCode = new TestErrorCodeImpl("DB_001", "Database connection failed");
@@ -320,6 +371,8 @@ class ErrorTest {
     assertEquals(longNativeText, longError.getNativeErrorText());
     assertEquals(longCode, longError.getErrorCode());
     assertEquals(2000, longError.getErrorDescription().length());
+    // Safe null check before calling length()
+    assertNotNull(longError.getNativeErrorText());
     assertEquals(3000, longError.getNativeErrorText().length());
 
     // Validation should still pass
@@ -332,7 +385,7 @@ class ErrorTest {
   @DisplayName("Should handle special characters and Unicode")
   void shouldHandleSpecialCharactersAndUnicode() {
     // Given
-    String specialDescription = "Error with émojis: 🚀 ❌ and unicode: ñáéíóú";
+    String specialDescription = "Error with emojis: 🚀 ❌ and unicode: 测试";
     String specialNativeText = "Native text with symbols: !@#$%^&*() 测试";
     ErrorCode specialCode = new TestErrorCodeImpl("SPECIAL_001", "Special characters error");
     com.rubensgomes.msreqresplib.error.Error specialError =
@@ -501,176 +554,199 @@ class ErrorTest {
   }
 
   @Test
-  @DisplayName("setNativeErrorText should update the native error text")
-  void setNativeErrorText_shouldUpdateNativeErrorText() {
+  @DisplayName("Mutable implementation should allow updates to native error text")
+  void mutableImplementation_shouldAllowUpdates() {
     // Given
     ErrorCode code = new TestErrorCodeImpl("TEST_CODE", "Test description");
-    com.rubensgomes.msreqresplib.error.Error error =
-        new TestErrorImpl("Test error", "Initial native text", code);
+    MutableTestErrorImpl mutableError =
+        new MutableTestErrorImpl("Test error", "Initial native text", code);
 
     // When
-    error.setNativeErrorText("Updated native text");
+    mutableError.setNativeErrorText("Updated native text");
 
     // Then
-    assertEquals("Updated native text", error.getNativeErrorText());
+    assertEquals("Updated native text", mutableError.getNativeErrorText());
   }
 
   @Test
-  @DisplayName("setNativeErrorText should accept null values")
-  void setNativeErrorText_shouldAcceptNull() {
+  @DisplayName("Mutable implementation should accept null values")
+  void mutableImplementation_shouldAcceptNull() {
     // Given
     ErrorCode code = new TestErrorCodeImpl("TEST_CODE", "Test description");
-    com.rubensgomes.msreqresplib.error.Error error =
-        new TestErrorImpl("Test error", "Initial native text", code);
+    MutableTestErrorImpl mutableError =
+        new MutableTestErrorImpl("Test error", "Initial native text", code);
 
     // When
-    error.setNativeErrorText(null);
+    mutableError.setNativeErrorText(null);
 
     // Then
-    assertNull(error.getNativeErrorText());
+    assertNull(mutableError.getNativeErrorText());
 
     // Validation should still pass with null native text
-    Set<ConstraintViolation<com.rubensgomes.msreqresplib.error.Error>> violations =
-        validator.validate(error);
+    Set<ConstraintViolation<Error>> violations = validator.validate(mutableError);
     assertTrue(violations.isEmpty());
   }
 
   @Test
-  @DisplayName("setNativeErrorText should handle empty strings")
-  void setNativeErrorText_shouldHandleEmptyStrings() {
+  @DisplayName("Mutable implementation should handle empty strings")
+  void mutableImplementation_shouldHandleEmptyStrings() {
     // Given
     ErrorCode code = new TestErrorCodeImpl("TEST_CODE", "Test description");
-    com.rubensgomes.msreqresplib.error.Error error =
-        new TestErrorImpl("Test error", "Initial native text", code);
+    MutableTestErrorImpl mutableError =
+        new MutableTestErrorImpl("Test error", "Initial native text", code);
 
     // When
-    error.setNativeErrorText("");
+    mutableError.setNativeErrorText("");
 
     // Then
-    assertEquals("", error.getNativeErrorText());
-    assertTrue(error.getNativeErrorText().isEmpty());
+    assertEquals("", mutableError.getNativeErrorText());
+    String nativeText = mutableError.getNativeErrorText();
+    assertNotNull(nativeText);
+    assertTrue(nativeText.isEmpty());
 
     // Validation should still pass with empty native text
-    Set<ConstraintViolation<com.rubensgomes.msreqresplib.error.Error>> violations =
-        validator.validate(error);
+    Set<ConstraintViolation<Error>> violations = validator.validate(mutableError);
     assertTrue(violations.isEmpty());
   }
 
   @Test
-  @DisplayName("setNativeErrorText should handle long strings")
-  void setNativeErrorText_shouldHandleLongStrings() {
+  @DisplayName("Mutable implementation should handle long strings")
+  void mutableImplementation_shouldHandleLongStrings() {
     // Given
     ErrorCode code = new TestErrorCodeImpl("TEST_CODE", "Test description");
-    com.rubensgomes.msreqresplib.error.Error error =
-        new TestErrorImpl("Test error", "Initial native text", code);
+    MutableTestErrorImpl mutableError =
+        new MutableTestErrorImpl("Test error", "Initial native text", code);
     String longNativeText = "Very long native error text: " + "X".repeat(5000);
 
     // When
-    error.setNativeErrorText(longNativeText);
+    mutableError.setNativeErrorText(longNativeText);
 
     // Then
-    assertEquals(longNativeText, error.getNativeErrorText());
-    assertEquals(5029, error.getNativeErrorText().length()); // 29 + 5000
+    assertEquals(longNativeText, mutableError.getNativeErrorText());
+    String nativeText = mutableError.getNativeErrorText();
+    assertNotNull(nativeText);
+    assertEquals(5029, nativeText.length()); // 29 + 5000
 
     // Validation should still pass
-    Set<ConstraintViolation<com.rubensgomes.msreqresplib.error.Error>> violations =
-        validator.validate(error);
+    Set<ConstraintViolation<Error>> violations = validator.validate(mutableError);
     assertTrue(violations.isEmpty());
   }
 
   @Test
-  @DisplayName("setNativeErrorText should handle special characters and Unicode")
-  void setNativeErrorText_shouldHandleSpecialCharacters() {
+  @DisplayName("Mutable implementation should handle special characters and Unicode")
+  void mutableImplementation_shouldHandleSpecialCharacters() {
     // Given
     ErrorCode code = new TestErrorCodeImpl("TEST_CODE", "Test description");
-    com.rubensgomes.msreqresplib.error.Error error =
-        new TestErrorImpl("Test error", "Initial native text", code);
-    String specialText = "Error with émojis: 🚀 ❌ and unicode: ñáéíóú and symbols: !@#$%^&*() 测试";
+    MutableTestErrorImpl mutableError =
+        new MutableTestErrorImpl("Test error", "Initial native text", code);
+    String specialText = "Error with emojis: 🚀 ❌ and unicode: 测试 and symbols: !@#$%^&*() 测试";
 
     // When
-    error.setNativeErrorText(specialText);
+    mutableError.setNativeErrorText(specialText);
 
     // Then
-    assertEquals(specialText, error.getNativeErrorText());
+    assertEquals(specialText, mutableError.getNativeErrorText());
 
     // Validation should still pass
-    Set<ConstraintViolation<com.rubensgomes.msreqresplib.error.Error>> violations =
-        validator.validate(error);
+    Set<ConstraintViolation<Error>> violations = validator.validate(mutableError);
     assertTrue(violations.isEmpty());
   }
 
   @Test
-  @DisplayName("setNativeErrorText should allow multiple updates")
-  void setNativeErrorText_shouldAllowMultipleUpdates() {
+  @DisplayName("Mutable implementation should allow multiple updates")
+  void mutableImplementation_shouldAllowMultipleUpdates() {
     // Given
     ErrorCode code = new TestErrorCodeImpl("TEST_CODE", "Test description");
-    com.rubensgomes.msreqresplib.error.Error error =
-        new TestErrorImpl("Test error", "Initial native text", code);
+    MutableTestErrorImpl mutableError =
+        new MutableTestErrorImpl("Test error", "Initial native text", code);
 
     // When & Then - Multiple updates
-    error.setNativeErrorText("First update");
-    assertEquals("First update", error.getNativeErrorText());
+    mutableError.setNativeErrorText("First update");
+    assertEquals("First update", mutableError.getNativeErrorText());
 
-    error.setNativeErrorText("Second update");
-    assertEquals("Second update", error.getNativeErrorText());
+    mutableError.setNativeErrorText("Second update");
+    assertEquals("Second update", mutableError.getNativeErrorText());
 
-    error.setNativeErrorText(null);
-    assertNull(error.getNativeErrorText());
+    mutableError.setNativeErrorText(null);
+    assertNull(mutableError.getNativeErrorText());
 
-    error.setNativeErrorText("Final update");
-    assertEquals("Final update", error.getNativeErrorText());
+    mutableError.setNativeErrorText("Final update");
+    assertEquals("Final update", mutableError.getNativeErrorText());
   }
 
   @Test
-  @DisplayName("setNativeErrorText should work in real-world error handling scenarios")
-  void setNativeErrorText_shouldWorkInRealWorldScenarios() {
+  @DisplayName("Mutable implementation should work in real-world error handling scenarios")
+  void mutableImplementation_shouldWorkInRealWorldScenarios() {
     // Given - Initial error without native text
     ErrorCode code = new TestErrorCodeImpl("API_CALL_FAILED", "API call failed");
-    com.rubensgomes.msreqresplib.error.Error error =
-        new TestErrorImpl("Failed to call external API", null, code);
+    MutableTestErrorImpl mutableError =
+        new MutableTestErrorImpl("Failed to call external API", null, code);
 
     // When - Adding diagnostic information during error handling
-    error.setNativeErrorText(
+    mutableError.setNativeErrorText(
         "HTTP 500: Internal Server Error - Response body: {\"error\": \"Database unavailable\"}");
 
     // Then
-    assertEquals("Failed to call external API", error.getErrorDescription());
+    assertEquals("Failed to call external API", mutableError.getErrorDescription());
     assertEquals(
         "HTTP 500: Internal Server Error - Response body: {\"error\": \"Database unavailable\"}",
-        error.getNativeErrorText());
-    assertEquals("API_CALL_FAILED", error.getErrorCode().getCode());
+        mutableError.getNativeErrorText());
+    assertEquals("API_CALL_FAILED", mutableError.getErrorCode().getCode());
 
     // Should pass validation
-    Set<ConstraintViolation<com.rubensgomes.msreqresplib.error.Error>> violations =
-        validator.validate(error);
+    Set<ConstraintViolation<Error>> violations = validator.validate(mutableError);
     assertTrue(violations.isEmpty());
 
     // When - Updating with more specific diagnostic info
-    error.setNativeErrorText(
+    mutableError.setNativeErrorText(
         "HTTP 500: java.net.ConnectException: Connection refused at api.example.com:443");
 
     // Then
     assertEquals(
         "HTTP 500: java.net.ConnectException: Connection refused at api.example.com:443",
-        error.getNativeErrorText());
+        mutableError.getNativeErrorText());
   }
 
   @Test
-  @DisplayName("setNativeErrorText should not affect other error properties")
-  void setNativeErrorText_shouldNotAffectOtherProperties() {
+  @DisplayName("Mutable implementation should not affect other error properties")
+  void mutableImplementation_shouldNotAffectOtherProperties() {
     // Given
     ErrorCode originalCode = new TestErrorCodeImpl("ORIGINAL_CODE", "Original description");
-    Error error =
-        new TestErrorImpl("Original error description", "Original native text", originalCode);
+    MutableTestErrorImpl mutableError =
+        new MutableTestErrorImpl(
+            "Original error description", "Original native text", originalCode);
 
     // When
-    error.setNativeErrorText("New native text");
+    mutableError.setNativeErrorText("New native text");
 
     // Then - Only native text should change
-    assertEquals("Original error description", error.getErrorDescription());
-    assertEquals("New native text", error.getNativeErrorText());
-    assertEquals(originalCode, error.getErrorCode());
-    assertEquals("ORIGINAL_CODE", error.getErrorCode().getCode());
-    assertEquals("Original description", error.getErrorCode().getDescription());
+    assertEquals("Original error description", mutableError.getErrorDescription());
+    assertEquals("New native text", mutableError.getNativeErrorText());
+    assertEquals(originalCode, mutableError.getErrorCode());
+    assertEquals("ORIGINAL_CODE", mutableError.getErrorCode().getCode());
+    assertEquals("Original description", mutableError.getErrorCode().getDescription());
+  }
+
+  @Test
+  @DisplayName("Should handle null native error text safely")
+  void shouldHandleNullNativeErrorTextSafely() {
+    // Given
+    ErrorCode code = new TestErrorCodeImpl("TEST_CODE", "Test description");
+    com.rubensgomes.msreqresplib.error.Error errorWithNullNative =
+        new TestErrorImpl("Test error", null, code);
+
+    // When & Then - Safe handling of null native text
+    String nativeText = errorWithNullNative.getNativeErrorText();
+    assertNull(nativeText);
+
+    // Should not call methods on null values
+    if (nativeText != null) {
+      nativeText.length(); // This would only be called if not null
+      nativeText.isEmpty(); // This would only be called if not null
+    }
+
+    // Validation should pass
+    Set<ConstraintViolation<Error>> violations = validator.validate(errorWithNullNative);
+    assertTrue(violations.isEmpty());
   }
 }

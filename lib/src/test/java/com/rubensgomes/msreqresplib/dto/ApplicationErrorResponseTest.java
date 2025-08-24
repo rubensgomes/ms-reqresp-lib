@@ -117,7 +117,7 @@ class ApplicationErrorResponseTest {
       return nativeErrorText;
     }
 
-    @Override
+    // Additional method for testing - not part of the Error interface
     public void setNativeErrorText(String nativeErrorText) {
       this.nativeErrorText = nativeErrorText;
     }

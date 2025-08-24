@@ -61,6 +61,7 @@ import jakarta.validation.constraints.NotNull;
  * }</pre>
  *
  * @author Rubens Gomes
+ * @since 0.0.1
  * @see jakarta.validation.constraints.NotBlank
  * @see jakarta.validation.constraints.NotNull
  * @see jakarta.annotation.Nullable
@@ -96,20 +97,6 @@ public interface Error {
    */
   @Nullable
   String getNativeErrorText();
-
-  /**
-   * Sets the native error text for this error.
-   *
-   * <p>This method allows updating the optional, low-level diagnostic information that may be
-   * useful for debugging or logging purposes. The native error text can include stack traces,
-   * system error messages, or other technical details that are not suitable for end-user display.
-   *
-   * <p>This field is optional and may be set to null when no native error information is available
-   * or relevant.
-   *
-   * @param nativeErrorText the native error text to set, or null if not available
-   */
-  void setNativeErrorText(@Nullable String nativeErrorText);
 
   /**
    * Returns the structured error code associated with this error.

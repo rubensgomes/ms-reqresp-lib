@@ -84,6 +84,7 @@ import jakarta.validation.constraints.NotBlank;
  * }</pre>
  *
  * @author Rubens Gomes
+ * @since 0.0.1
  * @see jakarta.validation.constraints.NotBlank
  * @see Error
  */
@@ -117,22 +118,90 @@ public interface ErrorCode {
    *
    * <p>The description provides a clear, user-friendly explanation of what this error code
    * represents. It should be written in plain language that can be understood by end users and
-   * displayed in error messages or user interfaces.
+   * displayed in error messages or user interfaces without requiring technical knowledge.
    *
-   * <p>Description guidelines:
+   * <p>The description serves as the primary communication mechanism between the system and users
+   * when errors occur. Unlike the error code which is designed for programmatic handling, the
+   * description is intended for human consumption and should provide meaningful context about what
+   * went wrong and potentially how to resolve the issue.
+   *
+   * <p>Description guidelines and best practices:
    *
    * <ul>
-   *   <li>Use clear, concise language appropriate for end users
-   *   <li>Avoid technical jargon or implementation details
-   *   <li>Provide actionable information when possible
-   *   <li>Keep descriptions consistent in tone and style
-   *   <li>Consider internationalization requirements
+   *   <li><strong>Clarity:</strong> Use clear, concise language appropriate for end users
+   *   <li><strong>Actionability:</strong> Provide actionable information when possible (e.g.,
+   *       "Please check your input" rather than just "Invalid input")
+   *   <li><strong>Consistency:</strong> Maintain consistent tone, style, and terminology across all
+   *       error descriptions
+   *   <li><strong>Avoidance of Technical Jargon:</strong> Avoid implementation details, stack
+   *       traces, or technical terminology that users wouldn't understand
+   *   <li><strong>Appropriate Length:</strong> Keep descriptions concise but informative -
+   *       typically one to two sentences
+   *   <li><strong>Internationalization Ready:</strong> Write descriptions that can be easily
+   *       translated to other languages
+   *   <li><strong>Contextual Relevance:</strong> Ensure the description accurately reflects the
+   *       specific error condition
    * </ul>
    *
-   * <p>The returned value must not be null, empty, or contain only whitespace characters as
-   * enforced by the {@code @NotBlank} validation annotation.
+   * <p>The description is commonly used in various scenarios:
    *
-   * @return the error description, never null or blank
+   * <ul>
+   *   <li><strong>User Interface Messages:</strong> Displayed directly to users in web
+   *       applications, mobile apps, or desktop software
+   *   <li><strong>API Error Responses:</strong> Included in REST API error responses to help client
+   *       developers understand issues
+   *   <li><strong>Log Messages:</strong> Combined with error codes in log entries for human
+   *       readability during troubleshooting
+   *   <li><strong>Error Documentation:</strong> Used in API documentation and error catalogs
+   *   <li><strong>Support and Debugging:</strong> Helps support teams quickly understand the nature
+   *       of reported issues
+   *   <li><strong>Monitoring Dashboards:</strong> Displayed in monitoring tools for quick error
+   *       identification
+   * </ul>
+   *
+   * <p>Example descriptions demonstrating good practices:
+   *
+   * <pre>{@code
+   * // Good: Clear and actionable
+   * "Required field is missing. Please provide a value."
+   *
+   * // Good: Specific but user-friendly
+   * "The provided email address format is invalid."
+   *
+   * // Good: Helpful guidance
+   * "Insufficient account balance. Please add funds and try again."
+   *
+   * // Poor: Too technical
+   * "NullPointerException in validation layer"
+   *
+   * // Poor: Not actionable
+   * "Error occurred"
+   *
+   * // Poor: Too verbose
+   * "The system has encountered an unexpected condition that prevents..."
+   * }</pre>
+   *
+   * <p>Integration with internationalization:
+   *
+   * <pre>{@code
+   * // Use error codes as message keys for i18n
+   * String errorCode = ApplicationErrorCode.VALIDATION_REQUIRED_FIELD.getCode();
+   * String localizedMessage = messageSource.getMessage(
+   *     errorCode,
+   *     null,
+   *     ApplicationErrorCode.VALIDATION_REQUIRED_FIELD.getDescription(), // fallback
+   *     locale
+   * );
+   * }</pre>
+   *
+   * <p>The returned value must not be null, empty, or contain only whitespace characters as
+   * enforced by the {@code @NotBlank} validation annotation. This ensures that every error code
+   * provides meaningful human-readable information.
+   *
+   * @return the human-readable error description, never null or blank
+   * @see #getCode() for the machine-readable error identifier
+   * @see com.rubensgomes.msreqresplib.error.ApplicationErrorCode for examples of well-formed
+   *     descriptions
    */
   @NotBlank
   String getDescription();
