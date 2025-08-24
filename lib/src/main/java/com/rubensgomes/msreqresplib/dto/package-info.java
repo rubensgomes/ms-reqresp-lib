@@ -38,8 +38,8 @@
  *       where appropriate
  *   <li><strong>Comprehensive Information:</strong> Rich data structures that provide complete
  *       context for their specific use cases
- *   <li><strong>Cross-Language Support:</strong> Support for both Java and Kotlin implementations
- *       to accommodate diverse microservices architectures
+ *   <li><strong>Modern Java Support:</strong> Leverages modern Java features like records for
+ *       immutable, efficient data structures
  *   <li><strong>Framework Integration:</strong> Seamless integration with validation frameworks,
  *       serialization libraries, and monitoring systems
  * </ul>
@@ -74,16 +74,16 @@
  *
  * <h3>{@link com.rubensgomes.msreqresplib.dto.ApplicationError}</h3>
  *
- * <p>A Kotlin-based implementation of the {@link com.rubensgomes.msreqresplib.error.Error}
+ * <p>A modern Java record implementation of the {@link com.rubensgomes.msreqresplib.error.Error}
  * interface that provides a concrete data structure for representing application errors:
  *
  * <ul>
  *   <li><strong>Comprehensive Error Details:</strong> Encapsulates human-readable descriptions,
  *       standardized error codes, and optional native error text
- *   <li><strong>Cross-Language Compatibility:</strong> Kotlin implementation that integrates
- *       seamlessly with Java-based microservices
+ *   <li><strong>Record-Based Design:</strong> Leverages Java records for immutability, automatic
+ *       equals/hashCode/toString, and clean syntax
  *   <li><strong>Validation Integration:</strong> Built-in validation constraints ensure data
- *       integrity
+ *       integrity with Jakarta validation annotations
  *   <li><strong>Flexible Error Context:</strong> Optional native error text supports detailed
  *       diagnostic information from underlying systems
  * </ul>
@@ -91,10 +91,11 @@
  * <p>Design benefits:
  *
  * <ul>
- *   <li>Immutable data class design for thread safety
- *   <li>Null-safe handling of optional diagnostic information
+ *   <li>Immutable record design for thread safety and performance
+ *   <li>Automatic interface implementation through record component names
  *   <li>Integration with standardized error code framework
  *   <li>Support for multi-layered error reporting (application + native)
+ *   <li>Compact syntax with comprehensive functionality
  * </ul>
  *
  * <h2>Design Patterns and Principles</h2>
@@ -114,6 +115,20 @@
  *       validation behavior
  * </ul>
  *
+ * <h3>Modern Java Design</h3>
+ *
+ * <p>The package leverages modern Java language features:
+ *
+ * <ul>
+ *   <li><strong>Record-Based DTOs:</strong> Uses Java records for concise, immutable data
+ *       structures
+ *   <li><strong>Interface Integration:</strong> Records automatically implement interface methods
+ *       through component name matching
+ *   <li><strong>Annotation-Driven Validation:</strong> Uses Jakarta validation annotations on
+ *       record components
+ *   <li><strong>Type Safety:</strong> Strong typing and immutability prevent runtime errors
+ * </ul>
+ *
  * <h3>Specialization Over Generalization</h3>
  *
  * <p>Rather than creating overly flexible generic structures, this package provides specialized
@@ -127,53 +142,52 @@
  *   <li><strong>Self-Documenting:</strong> Class names and structure clearly indicate intended use
  * </ul>
  *
- * <h3>Multi-Language Support</h3>
- *
- * <p>The package demonstrates support for polyglot microservices architectures:
- *
- * <ul>
- *   <li><strong>Java Integration:</strong> Full compatibility with Java-based microservices
- *   <li><strong>Kotlin Support:</strong> Native Kotlin implementations for services built in Kotlin
- *   <li><strong>Interoperability:</strong> Seamless interaction between Java and Kotlin components
- *   <li><strong>Common Interfaces:</strong> Shared contracts ensure consistent behavior across
- *       languages
- * </ul>
- *
  * <h2>Usage Examples</h2>
+ *
+ * <h3>Creating Application Errors with Records</h3>
+ *
+ * <pre>{@code
+ * // Modern Java record usage - creating detailed error
+ * public record CustomErrorCode(String code, String description) implements ErrorCode {
+ *     @Override
+ *     public String getCode() { return code; }
+ *
+ *     @Override
+ *     public String getDescription() { return description; }
+ * }
+ *
+ * // Create error with record syntax
+ * var errorCode = new CustomErrorCode("SYSGN001", "Database connection failed");
+ * var error = new ApplicationError(
+ *     "Unable to connect to database",
+ *     errorCode,
+ *     "Connection timeout after 30 seconds to database server"
+ * );
+ *
+ * // Access error information using record methods
+ * String description = error.errorDescription();  // "Unable to connect to database"
+ * String code = error.errorCode().getCode();      // "SYSGN001"
+ * String nativeText = error.nativeErrorText();    // "Connection timeout..."
+ * }</pre>
  *
  * <h3>Creating Comprehensive Error Responses</h3>
  *
  * <pre>{@code
- * // Java usage - creating detailed error response
- * ApplicationError error = new ApplicationError(
- *     "Database connection failed",
- *     ApplicationErrorCode.SYSTEM_DATABASE_CONNECTION,
- *     "Connection timeout after 30 seconds to database server"
+ * // Create error response using ApplicationError record
+ * var errorCode = new CustomErrorCode("VALGN001", "Required field is missing");
+ * var error = new ApplicationError(
+ *     "Username is required",
+ *     errorCode,
+ *     "Field validation failed: username cannot be null or empty"
  * );
  *
- * ApplicationErrorResponse response = new ApplicationErrorResponse(
+ * var response = new ApplicationErrorResponse(
  *     "order-service",
  *     "txn-12345",
  *     Status.ERROR,
- *     "Unable to process order due to database connectivity issues",
+ *     "Unable to process order due to validation errors",
  *     error
  * );
- * }</pre>
- *
- * <h3>Kotlin Error Handling</h3>
- *
- * <pre>{@code
- * // Kotlin usage - leveraging data class features
- * val error = ApplicationError(
- *     errorDescription = "Invalid payment method",
- *     errorCode = ApplicationErrorCode.PAYMENT_METHOD_INVALID,
- *     nativeErrorText = "Card number failed Luhn algorithm validation"
- * )
- *
- * // Error can be easily copied with modifications
- * val enhancedError = error.copy(
- *     nativeErrorText = "${error.nativeErrorText} - Additional context from payment gateway"
- * )
  * }</pre>
  *
  * <h3>Controller Integration with Enhanced Error Handling</h3>
@@ -186,13 +200,14 @@
  *         return ResponseEntity.ok(processOrder(request));
  *
  *     } catch (ValidationException e) {
- *         ApplicationError error = new ApplicationError(
+ *         var errorCode = new CustomErrorCode("VALGN001", "Validation failed");
+ *         var error = new ApplicationError(
  *             e.getMessage(),
- *             ApplicationErrorCode.VALIDATION_REQUIRED_FIELD,
+ *             errorCode,
  *             e.getFieldErrors().toString()
  *         );
  *
- *         ApplicationErrorResponse errorResponse = new ApplicationErrorResponse(
+ *         var errorResponse = new ApplicationErrorResponse(
  *             request.getClientId(),
  *             request.getTransactionId(),
  *             Status.ERROR,
@@ -203,13 +218,14 @@
  *         return ResponseEntity.badRequest().body(errorResponse);
  *
  *     } catch (DatabaseException e) {
- *         ApplicationError error = new ApplicationError(
+ *         var errorCode = new CustomErrorCode("SYSGN001", "Database operation failed");
+ *         var error = new ApplicationError(
  *             "Database operation failed",
- *             ApplicationErrorCode.SYSTEM_DATABASE_CONNECTION,
- *             e.getNativeSqlException().getMessage()
+ *             errorCode,
+ *             e.getCause().getMessage()
  *         );
  *
- *         ApplicationErrorResponse errorResponse = new ApplicationErrorResponse(
+ *         var errorResponse = new ApplicationErrorResponse(
  *             request.getClientId(),
  *             request.getTransactionId(),
  *             Status.ERROR,
@@ -231,15 +247,15 @@
  *   "clientId": "order-service",
  *   "transactionId": "txn-12345",
  *   "status": "ERROR",
- *   "timestamp": "2025-01-15T10:30:00Z",
- *   "message": "Unable to process order due to database connectivity issues",
+ *   "timestamp": "2025-08-24T10:30:00Z",
+ *   "message": "Unable to process order due to validation errors",
  *   "error": {
- *     "errorDescription": "Database connection failed",
+ *     "errorDescription": "Username is required",
  *     "errorCode": {
- *       "code": "SYSGN003",
- *       "description": "Database connection failure"
+ *       "code": "VALGN001",
+ *       "description": "Required field is missing"
  *     },
- *     "nativeErrorText": "Connection timeout after 30 seconds to database server"
+ *     "nativeErrorText": "Field validation failed: username cannot be null or empty"
  *   }
  * }
  * }</pre>
@@ -255,10 +271,10 @@
  *   <li><strong>Implement Comprehensive Error Handling:</strong> Leverage {@link
  *       com.rubensgomes.msreqresplib.dto.ApplicationError} to provide both application-level and
  *       native system error details
+ *   <li><strong>Leverage Record Benefits:</strong> Take advantage of record immutability, automatic
+ *       methods, and concise syntax
  *   <li><strong>Maintain Validation Standards:</strong> Ensure all required fields are populated
  *       and validation constraints are met
- *   <li><strong>Support Multi-Language Teams:</strong> Use appropriate language implementations
- *       (Java vs Kotlin) based on your team's preferences and existing codebase
  *   <li><strong>Consistent Error Communication:</strong> Standardize error response formats across
  *       all microservices using these DTOs
  *   <li><strong>Monitor Error Patterns:</strong> Use the structured error data for monitoring and
@@ -272,6 +288,8 @@
  * <ul>
  *   <li><strong>Follow Naming Conventions:</strong> Use descriptive names that clearly indicate the
  *       DTO's purpose and specialization
+ *   <li><strong>Consider Record Design:</strong> Use Java records for immutable DTOs when
+ *       appropriate
  *   <li><strong>Extend Base Classes:</strong> Build upon {@link
  *       com.rubensgomes.msreqresplib.BaseRequest} or {@link
  *       com.rubensgomes.msreqresplib.BaseResponse} when appropriate
@@ -279,8 +297,6 @@
  *       for the specific use case
  *   <li><strong>Document Purpose:</strong> Clearly document what scenarios the DTO is designed for
  *       and how it differs from base classes
- *   <li><strong>Consider Language Choice:</strong> Choose Java or Kotlin based on the target
- *       audience and integration requirements
  *   <li><strong>Maintain Consistency:</strong> Follow the same patterns established by existing
  *       DTOs in this package
  * </ul>
@@ -288,23 +304,27 @@
  * <h2>Performance Considerations</h2>
  *
  * <ul>
- *   <li><strong>Immutable Design:</strong> Both Java and Kotlin implementations use immutable
- *       patterns for thread safety and caching benefits
+ *   <li><strong>Record Efficiency:</strong> Java records provide optimal memory layout and
+ *       performance for immutable data
  *   <li><strong>Validation Caching:</strong> Validation results can be cached due to immutable
  *       nature
  *   <li><strong>Serialization Optimization:</strong> DTOs are optimized for JSON
  *       serialization/deserialization performance
  *   <li><strong>Memory Efficiency:</strong> Structured error data prevents string concatenation and
  *       improves memory usage patterns
+ *   <li><strong>Thread Safety:</strong> Immutable design eliminates synchronization overhead
  * </ul>
  *
  * @author Rubens Gomes
- * @version 0.0.4
+ * @version 0.0.7
  * @since 0.0.2
  * @see com.rubensgomes.msreqresplib.BaseRequest
  * @see com.rubensgomes.msreqresplib.BaseResponse
  * @see com.rubensgomes.msreqresplib.error
  * @see com.rubensgomes.msreqresplib.dto.ApplicationErrorResponse
  * @see com.rubensgomes.msreqresplib.dto.ApplicationError
+ * @see jakarta.validation.constraints.NotBlank
+ * @see jakarta.validation.constraints.NotNull
+ * @see jakarta.annotation.Nullable
  */
 package com.rubensgomes.msreqresplib.dto;
