@@ -69,12 +69,13 @@
  *   <li><strong>Validation Support:</strong> Built-in constraints ensure data integrity
  * </ul>
  *
- * <p>The Error interface uses modern Java patterns with method names that match record components:
+ * <p>The Error interface uses standard Java getter method patterns for accessing error information:
  *
  * <ul>
- *   <li>{@code errorDescription()} - Returns the human-readable error description
- *   <li>{@code errorCode()} - Returns the structured ErrorCode object
- *   <li>{@code nativeErrorText()} - Returns optional native error information
+ *   <li>{@code getErrorDescription()} - Returns the human-readable error description
+ *   <li>{@code getErrorCode()} - Returns the structured ErrorCode object
+ *   <li>{@code getNativeErrorText()} - Returns optional native error information
+ *   <li>{@code setNativeErrorText(String)} - Updates the optional native error text
  * </ul>
  *
  * <h2>Design Principles</h2>
@@ -90,16 +91,22 @@
  *   <li><strong>Validation Integration:</strong> All error components are validated for integrity
  * </ul>
  *
- * <h3>Modern Java Design</h3>
+ * <h3>Modern Java and Framework Integration</h3>
  *
- * <p>The framework leverages modern Java features:
+ * <p>The framework leverages modern Java features and popular frameworks:
  *
  * <ul>
- *   <li><strong>Record Support:</strong> Error implementations can use Java records for
- *       immutability
- *   <li><strong>Interface Design:</strong> Clean interfaces that work well with records
- *   <li><strong>Annotation-Driven Validation:</strong> Uses Jakarta validation annotations
- *   <li><strong>Type Safety:</strong> Strong typing prevents runtime errors
+ *   <li><strong>Interface-Based Design:</strong> Clean interfaces that support multiple
+ *       implementation strategies including traditional classes, Lombok-enhanced classes, and Java
+ *       records
+ *   <li><strong>Lombok Support:</strong> Error implementations can use Lombok annotations for
+ *       boilerplate code reduction while maintaining full interface compatibility
+ *   <li><strong>Annotation-Driven Validation:</strong> Uses Jakarta Bean Validation annotations for
+ *       comprehensive data integrity checks
+ *   <li><strong>Type Safety:</strong> Strong typing prevents runtime errors and provides excellent
+ *       IDE support
+ *   <li><strong>Framework Integration:</strong> Seamless integration with Spring Boot, Jackson, and
+ *       other modern Java frameworks
  * </ul>
  *
  * <h3>Extensibility and Flexibility</h3>
@@ -107,13 +114,14 @@
  * <p>The framework supports growth and customization:
  *
  * <ul>
- *   <li><strong>Custom Error Codes:</strong> Services can implement their own ErrorCode types
+ *   <li><strong>Custom Error Codes:</strong> Services can implement their own ErrorCode types using
+ *       enums or classes
  *   <li><strong>Custom Error Implementations:</strong> Services can implement custom error data
  *       structures while maintaining interface compatibility
  *   <li><strong>Backward Compatibility:</strong> New error implementations don't break existing
  *       error handling
- *   <li><strong>Framework Integration:</strong> Works seamlessly with Spring Boot and other
- *       frameworks
+ *   <li><strong>Framework Integration:</strong> Works seamlessly with Spring Boot, Jakarta EE, and
+ *       other modern frameworks
  * </ul>
  *
  * <h3>Developer Experience</h3>
@@ -123,10 +131,12 @@
  * <ul>
  *   <li><strong>Type Safety:</strong> Strong typing prevents runtime errors
  *   <li><strong>IDE Support:</strong> Interface-based design provides autocomplete and
- *       documentation
- *   <li><strong>Clear Documentation:</strong> Comprehensive Javadoc for all components
- *   <li><strong>Validation Feedback:</strong> Immediate feedback on invalid error data
+ *       comprehensive documentation
+ *   <li><strong>Clear Documentation:</strong> Extensive Javadoc for all components with examples
+ *   <li><strong>Validation Feedback:</strong> Immediate feedback on invalid error data through
+ *       Jakarta validation
  *   <li><strong>Record Compatibility:</strong> Modern Java records work seamlessly with interfaces
+ *       through component name matching
  * </ul>
  *
  * <h2>Usage Examples</h2>
@@ -134,7 +144,7 @@
  * <h3>Implementing Custom Error Codes</h3>
  *
  * <pre>{@code
- * // Simple error code implementation
+ * // Simple error code implementation using enum
  * public enum ApplicationErrorCodes implements ErrorCode {
  *     VALIDATION_REQUIRED_FIELD("VALGN001", "Required field is missing"),
  *     VALIDATION_INVALID_FORMAT("VALGN002", "Invalid field format"),
@@ -150,77 +160,22 @@
  *     }
  *
  *     @Override
- *     public String getCode() { return code; }
+ *     public String getCode() {
+ *         return code;
+ *     }
  *
  *     @Override
- *     public String getDescription() { return description; }
- * }
- * }</pre>
- *
- * <h3>Using Error Records</h3>
- *
- * <pre>{@code
- * // Modern Java record implementation of Error interface
- * public record ApplicationError(
- *     @NotBlank String errorDescription,
- *     @NotNull ErrorCode errorCode,
- *     @Nullable String nativeErrorText
- * ) implements Error {
- *     // Record automatically implements interface methods through component names
- * }
- *
- * // Usage example
- * ErrorCode code = ApplicationErrorCodes.VALIDATION_REQUIRED_FIELD;
- * ApplicationError error = new ApplicationError(
- *     "Username is required",
- *     code,
- *     "Field validation failed: username cannot be null or empty"
- * );
- *
- * // Access error information
- * String description = error.errorDescription();  // "Username is required"
- * String codeId = error.errorCode().getCode();    // "VALGN001"
- * String nativeText = error.nativeErrorText();    // "Field validation..."
- * }</pre>
- *
- * <h3>Error Handling Patterns</h3>
- *
- * <pre>{@code
- * // Handle errors by code pattern
- * public ResponseEntity<?> handleError(Error error) {
- *     String errorCode = error.errorCode().getCode();
- *
- *     if (errorCode.startsWith("VALGN")) {
- *         // Handle validation errors - return 400 Bad Request
- *         return ResponseEntity.badRequest().body(createErrorResponse(error));
- *     } else if (errorCode.startsWith("SECGN")) {
- *         // Handle security errors - return 401/403
- *         return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
- *             .body(createErrorResponse(error));
- *     } else if (errorCode.startsWith("SYSGN")) {
- *         // Handle system errors - return 500 Internal Server Error
- *         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
- *             .body(createErrorResponse(error));
+ *     public String getDescription() {
+ *         return description;
  *     }
- *     // Default handling
- *     return ResponseEntity.badRequest().body(createErrorResponse(error));
  * }
- * }</pre>
  *
- * <h3>Service-Specific Error Implementations</h3>
- *
- * <pre>{@code
- * // Define service-specific error codes
- * public enum UserServiceErrorCode implements ErrorCode {
- *     USER_ALREADY_EXISTS("USRMS001", "User with this username already exists"),
- *     USER_NOT_FOUND("USRMS002", "User not found"),
- *     USER_PROFILE_INCOMPLETE("USRMS003", "User profile is incomplete"),
- *     USER_ACCOUNT_SUSPENDED("USRMS004", "User account has been suspended");
- *
+ * // Alternative class-based implementation
+ * public class CustomErrorCode implements ErrorCode {
  *     private final String code;
  *     private final String description;
  *
- *     UserServiceErrorCode(String code, String description) {
+ *     public CustomErrorCode(String code, String description) {
  *         this.code = code;
  *         this.description = description;
  *     }
@@ -231,74 +186,300 @@
  *     @Override
  *     public String getDescription() { return description; }
  * }
+ * }</pre>
  *
- * // Use with error records
- * UserServiceErrorCode code = UserServiceErrorCode.USER_NOT_FOUND;
- * ApplicationError error = new ApplicationError(
- *     "The requested user could not be found",
- *     code,
- *     "Database query returned no results for userId: 12345"
+ * <h3>Creating Error Objects with Different Approaches</h3>
+ *
+ * <pre>{@code
+ * // Using ApplicationError (Lombok-enhanced class)
+ * ErrorCode errorCode = ApplicationErrorCodes.VALIDATION_REQUIRED_FIELD;
+ * ApplicationError lomokError = new ApplicationError(
+ *     "Username is required for account creation",
+ *     errorCode,
+ *     "Validation failed on field: username"
  * );
+ *
+ * // Access error information using generated getters
+ * String description = lomokError.getErrorDescription();
+ * String code = lomokError.getErrorCode().getCode();
+ * String nativeText = lomokError.getNativeErrorText();
+ *
+ * // Update native error text using generated setter
+ * lomokError.setNativeErrorText("Field validation failed: username cannot be null or empty");
+ *
+ * // Using Java record implementation (if preferred)
+ * public record RecordError(
+ *     @NotBlank String errorDescription,
+ *     @NotNull ErrorCode errorCode,
+ *     @Nullable String nativeErrorText
+ * ) implements Error {
+ *
+ *     @Override
+ *     public String getErrorDescription() { return errorDescription; }
+ *
+ *     @Override
+ *     public ErrorCode getErrorCode() { return errorCode; }
+ *
+ *     @Override
+ *     public String getNativeErrorText() { return nativeErrorText; }
+ *
+ *     @Override
+ *     public void setNativeErrorText(String nativeErrorText) {
+ *         // Records are immutable, so this would need special handling
+ *         throw new UnsupportedOperationException("Records are immutable");
+ *     }
+ * }
+ * }</pre>
+ *
+ * <h3>Service Integration and Error Handling</h3>
+ *
+ * <pre>{@code
+ * @Service
+ * public class UserService {
+ *
+ *     public User createUser(CreateUserRequest request) throws ServiceException {
+ *         try {
+ *             // Validate input
+ *             if (request.getUsername() == null || request.getUsername().trim().isEmpty()) {
+ *                 ErrorCode validationCode = ApplicationErrorCodes.VALIDATION_REQUIRED_FIELD;
+ *                 ApplicationError error = new ApplicationError(
+ *                     "Username is required",
+ *                     validationCode,
+ *                     "Field validation failed: username cannot be null or empty"
+ *                 );
+ *                 throw new ServiceException(error);
+ *             }
+ *
+ *             // Process user creation
+ *             return userRepository.save(new User(request.getUsername()));
+ *
+ *         } catch (DatabaseException e) {
+ *             ErrorCode dbCode = ApplicationErrorCodes.SYSTEM_DATABASE_ERROR;
+ *             ApplicationError error = new ApplicationError(
+ *                 "User creation failed due to system error",
+ *                 dbCode,
+ *                 e.getMessage()
+ *             );
+ *             throw new ServiceException(error);
+ *         }
+ *     }
+ * }
+ *
+ * // Custom exception that carries Error information
+ * public class ServiceException extends Exception {
+ *     private final Error error;
+ *
+ *     public ServiceException(Error error) {
+ *         super(error.getErrorDescription());
+ *         this.error = error;
+ *     }
+ *
+ *     public Error getError() { return error; }
+ * }
+ * }</pre>
+ *
+ * <h3>REST Controller Error Handling</h3>
+ *
+ * <pre>{@code
+ * @RestController
+ * @RequestMapping("/api/users")
+ * public class UserController {
+ *
+ *     @Autowired
+ *     private UserService userService;
+ *
+ *     @PostMapping
+ *     public ResponseEntity<?> createUser(@Valid @RequestBody CreateUserRequest request) {
+ *         try {
+ *             User user = userService.createUser(request);
+ *             BaseResponse successResponse = new BaseResponse(
+ *                 request.getClientId(),
+ *                 request.getTransactionId(),
+ *                 Status.SUCCESS
+ *             );
+ *             return ResponseEntity.ok(successResponse);
+ *
+ *         } catch (ServiceException e) {
+ *             ApplicationErrorResponse errorResponse = new ApplicationErrorResponse(
+ *                 request.getClientId(),
+ *                 request.getTransactionId(),
+ *                 Status.ERROR,
+ *                 e.getError()
+ *             );
+ *
+ *             // Determine appropriate HTTP status based on error type
+ *             String errorCode = e.getError().getErrorCode().getCode();
+ *             if (errorCode.startsWith("VALGN")) {
+ *                 return ResponseEntity.badRequest().body(errorResponse);
+ *             } else if (errorCode.startsWith("SECGN")) {
+ *                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorResponse);
+ *             } else {
+ *                 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+ *             }
+ *         }
+ *     }
+ * }
+ * }</pre>
+ *
+ * <h2>Advanced Usage Patterns</h2>
+ *
+ * <h3>Error Code Categories and Conventions</h3>
+ *
+ * <p>Establish consistent error code naming conventions across your microservices:
+ *
+ * <ul>
+ *   <li><strong>Validation Errors:</strong> VALGN### (e.g., VALGN001, VALGN002)
+ *   <li><strong>Security Errors:</strong> SECGN### (e.g., SECGN001, SECGN002)
+ *   <li><strong>System Errors:</strong> SYSGN### (e.g., SYSGN001, SYSGN002)
+ *   <li><strong>Business Logic Errors:</strong> BIZGN### (e.g., BIZGN001, BIZGN002)
+ *   <li><strong>Integration Errors:</strong> INTGN### (e.g., INTGN001, INTGN002)
+ * </ul>
+ *
+ * <h3>Internationalization Support</h3>
+ *
+ * <pre>{@code
+ * // Error code with internationalization support
+ * public enum InternationalErrorCode implements ErrorCode {
+ *     VALIDATION_REQUIRED_FIELD("VALGN001");
+ *
+ *     private final String code;
+ *     private final MessageSource messageSource;
+ *
+ *     InternationalErrorCode(String code) {
+ *         this.code = code;
+ *         this.messageSource = ApplicationContextUtils.getBean(MessageSource.class);
+ *     }
+ *
+ *     @Override
+ *     public String getCode() { return code; }
+ *
+ *     @Override
+ *     public String getDescription() {
+ *         return messageSource.getMessage(code, null, Locale.getDefault());
+ *     }
+ *
+ *     public String getDescription(Locale locale) {
+ *         return messageSource.getMessage(code, null, locale);
+ *     }
+ * }
+ * }</pre>
+ *
+ * <h3>Error Transformation and Enrichment</h3>
+ *
+ * <pre>{@code
+ * // Service for transforming and enriching errors across service boundaries
+ * @Component
+ * public class ErrorTransformationService {
+ *
+ *     public ApplicationError enrichError(Error originalError, String additionalContext) {
+ *         ApplicationError enrichedError = new ApplicationError(
+ *             originalError.getErrorDescription(),
+ *             originalError.getErrorCode(),
+ *             originalError.getNativeErrorText()
+ *         );
+ *
+ *         // Add additional context to native error text
+ *         String enrichedNativeText = String.format("%s | Additional context: %s",
+ *             originalError.getNativeErrorText() != null ? originalError.getNativeErrorText() : "",
+ *             additionalContext);
+ *         enrichedError.setNativeErrorText(enrichedNativeText);
+ *
+ *         return enrichedError;
+ *     }
+ *
+ *     public ApplicationError mapExternalError(ExternalServiceError externalError) {
+ *         ErrorCode mappedCode = mapExternalErrorCode(externalError.getCode());
+ *         return new ApplicationError(
+ *             "External service error: " + externalError.getMessage(),
+ *             mappedCode,
+ *             "External service response: " + externalError.getDetails()
+ *         );
+ *     }
+ * }
  * }</pre>
  *
  * <h2>Integration Guidelines</h2>
  *
- * <p>To effectively integrate this error handling framework:
+ * <h3>Microservices Error Propagation</h3>
  *
- * <ol>
- *   <li><strong>Implement ErrorCode Interface:</strong> Create enums or classes that implement the
- *       ErrorCode interface for your error codes
- *   <li><strong>Use Error Records:</strong> Leverage Java records that implement the Error
- *       interface for immutable error data structures
- *   <li><strong>Follow Naming Conventions:</strong> Use consistent prefixes for error codes (e.g.,
- *       VALGN for validation, SECGN for security)
- *   <li><strong>Implement Validation:</strong> Use Jakarta validation annotations to ensure error
- *       data integrity
- *   <li><strong>Add Error Monitoring:</strong> Implement metrics collection for error tracking
- *   <li><strong>Document Error Codes:</strong> Provide clear descriptions for all error codes
- *   <li><strong>Handle by Pattern:</strong> Implement error handling logic that processes errors by
- *       code patterns or categories
- * </ol>
- *
- * <h2>Best Practices</h2>
+ * <p>When propagating errors across service boundaries:
  *
  * <ul>
- *   <li><strong>Error Code Uniqueness:</strong> Ensure all error codes are unique across the
- *       application ecosystem
- *   <li><strong>Meaningful Descriptions:</strong> Write clear, actionable error descriptions that
- *       help users understand what went wrong
- *   <li><strong>Consistent Categorization:</strong> Use consistent prefixes for error code
- *       categories
- *   <li><strong>Immutable Design:</strong> Use records or immutable classes for error data
- *   <li><strong>Validation Integration:</strong> Always validate error data using annotations
- *   <li><strong>Backward Compatibility:</strong> Avoid changing existing error codes; add new ones
- *       instead
- *   <li><strong>Logging Integration:</strong> Log error codes along with detailed diagnostic
- *       information for troubleshooting
- *   <li><strong>Client Communication:</strong> Use error descriptions for user-facing messages and
- *       error codes for programmatic handling
+ *   <li><strong>Preserve Transaction IDs:</strong> Maintain correlation IDs for distributed tracing
+ *   <li><strong>Transform Appropriately:</strong> Convert internal errors to client-appropriate
+ *       messages
+ *   <li><strong>Add Context:</strong> Enrich errors with service-specific diagnostic information
+ *   <li><strong>Maintain Structured Codes:</strong> Preserve error codes for programmatic handling
  * </ul>
  *
- * <h2>Framework Integration</h2>
+ * <h3>Logging and Monitoring Integration</h3>
  *
- * <p>This error handling framework integrates seamlessly with:
+ * <pre>{@code
+ * @Component
+ * public class ErrorLoggingService {
  *
- * <ul>
- *   <li><strong>Spring Boot:</strong> Error handling in controllers and services
- *   <li><strong>Jakarta Validation:</strong> Automatic validation of error data
- *   <li><strong>Microservices:</strong> Consistent error communication between services
- *   <li><strong>Monitoring Tools:</strong> Error code-based metrics and alerting
- *   <li><strong>API Documentation:</strong> Clear error response documentation
- * </ul>
+ *     private static final Logger logger = LoggerFactory.getLogger(ErrorLoggingService.class);
+ *
+ *     public void logError(Error error, String transactionId, String serviceName) {
+ *         // Structured logging for error monitoring
+ *         MDC.put("transactionId", transactionId);
+ *         MDC.put("errorCode", error.getErrorCode().getCode());
+ *         MDC.put("serviceName", serviceName);
+ *
+ *         logger.error("Service error occurred: {} | Code: {} | Native: {}",
+ *             error.getErrorDescription(),
+ *             error.getErrorCode().getCode(),
+ *             error.getNativeErrorText());
+ *
+ *         MDC.clear();
+ *     }
+ * }
+ * }</pre>
+ *
+ * <h3>Testing Error Scenarios</h3>
+ *
+ * <pre>{@code
+ * @Test
+ * public class ErrorHandlingTest {
+ *
+ *     @Test
+ *     public void testErrorCreationAndValidation() {
+ *         ErrorCode testCode = ApplicationErrorCodes.VALIDATION_REQUIRED_FIELD;
+ *         ApplicationError error = new ApplicationError(
+ *             "Test error description",
+ *             testCode,
+ *             "Test native error text"
+ *         );
+ *
+ *         assertThat(error.getErrorDescription()).isEqualTo("Test error description");
+ *         assertThat(error.getErrorCode().getCode()).isEqualTo("VALGN001");
+ *         assertThat(error.getNativeErrorText()).isEqualTo("Test native error text");
+ *     }
+ *
+ *     @Test
+ *     public void testErrorResponseCreation() {
+ *         ErrorCode code = ApplicationErrorCodes.SYSTEM_DATABASE_ERROR;
+ *         ApplicationError error = new ApplicationError("Database error", code, null);
+ *
+ *         ApplicationErrorResponse response = new ApplicationErrorResponse(
+ *             "test-client",
+ *             "txn-123",
+ *             Status.ERROR,
+ *             error
+ *         );
+ *
+ *         assertThat(response.getError()).isNotNull();
+ *         assertThat(response.getStatus()).isEqualTo(Status.ERROR);
+ *     }
+ * }
+ * }</pre>
  *
  * @author Rubens Gomes
- * @version 0.0.7
  * @since 0.0.1
- * @see com.rubensgomes.msreqresplib.error.ErrorCode
- * @see com.rubensgomes.msreqresplib.error.Error
- * @see com.rubensgomes.msreqresplib.dto.ApplicationError
- * @see jakarta.validation.constraints.NotBlank
- * @see jakarta.validation.constraints.NotNull
- * @see jakarta.annotation.Nullable
+ * @see com.rubensgomes.msreqresplib.BaseResponse
+ * @see com.rubensgomes.msreqresplib.dto.ApplicationErrorResponse
+ * @see com.rubensgomes.msreqresplib.error.ApplicationError
+ * @see jakarta.validation.constraints
+ * @see lombok.Data
  */
 package com.rubensgomes.msreqresplib.error;

@@ -23,7 +23,7 @@ Base request and response types to be used by microservices.
 ```
 
 ```shell
-./gradlew --info build
+./gradlew --info clean build
 ```
 
 ```shell
