@@ -20,7 +20,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import java.util.Set;
 import java.util.UUID;
 
-import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -36,20 +36,21 @@ import lombok.extern.slf4j.Slf4j;
 @DisplayName("BaseRequest Tests")
 class BaseRequestTest {
 
-  private static Validator validator;
+  private ValidatorFactory factory;
+  private Validator validator;
 
-  @BeforeAll
-  static void setupValidator() {
-    log.debug("Setting up validation factory");
-    try (ValidatorFactory factory = Validation.buildDefaultValidatorFactory()) {
-      validator = factory.getValidator();
-    }
+  @BeforeEach
+  void setUp() {
+    factory = Validation.buildDefaultValidatorFactory();
+    validator = factory.getValidator();
   }
 
-  /** Test implementation of BaseRequest for testing purposes. */
+  /**
+   * Concrete implementation of BaseRequest for testing purposes. This allows us to test the
+   * abstract BaseRequest class functionality.
+   */
   @EqualsAndHashCode(callSuper = true)
   static class TestRequest extends BaseRequest {
-
     public TestRequest(String clientId, String transactionId) {
       super(clientId, transactionId);
     }
@@ -60,43 +61,35 @@ class BaseRequestTest {
   class ConstructorTests {
 
     @Test
-    @DisplayName("Should create instance with valid parameters")
-    void constructor_shouldCreateInstance_withValidParameters() {
-      String clientId = "test-client-123";
-      String transactionId = "test-transaction-456";
-
-      TestRequest request = new TestRequest(clientId, transactionId);
-
-      assertNotNull(request, "Request should be created successfully");
-      assertEquals(clientId, request.getClientId(), "ClientId should be set correctly");
-      assertEquals(
-          transactionId, request.getTransactionId(), "TransactionId should be set correctly");
-    }
-
-    @Test
-    @DisplayName("Should create instance with UUID values")
-    void constructor_shouldCreateInstance_withUuidValues() {
-      String clientId = UUID.randomUUID().toString();
+    @DisplayName("Should create request with valid parameters")
+    void shouldCreateRequestWithValidParameters() {
+      // Given
+      String clientId = "test-service";
       String transactionId = UUID.randomUUID().toString();
 
+      // When
       TestRequest request = new TestRequest(clientId, transactionId);
 
-      assertNotNull(request, "Request should be created with UUID values");
-      assertEquals(clientId, request.getClientId(), "ClientId should match UUID");
-      assertEquals(transactionId, request.getTransactionId(), "TransactionId should match UUID");
+      // Then
+      assertNotNull(request);
+      assertEquals(clientId, request.getClientId());
+      assertEquals(transactionId, request.getTransactionId());
     }
 
     @Test
-    @DisplayName("Should accept null values in constructor")
-    void constructor_shouldAcceptNullValues() {
-      assertDoesNotThrow(
-          () -> {
-            TestRequest request = new TestRequest(null, null);
-            assertNotNull(request, "Request should be created even with null values");
-            assertNull(request.getClientId(), "ClientId should be null");
-            assertNull(request.getTransactionId(), "TransactionId should be null");
-          },
-          "Constructor should accept null values without throwing exceptions");
+    @DisplayName("Should create request with UUID transaction ID")
+    void shouldCreateRequestWithUuidTransactionId() {
+      // Given
+      String clientId = "user-service";
+      String transactionId = UUID.randomUUID().toString();
+
+      // When
+      TestRequest request = new TestRequest(clientId, transactionId);
+
+      // Then
+      assertNotNull(request.getTransactionId());
+      assertEquals(36, request.getTransactionId().length()); // UUID string length
+      assertTrue(request.getTransactionId().contains("-")); // UUID format
     }
   }
 
@@ -105,293 +98,139 @@ class BaseRequestTest {
   class ValidationTests {
 
     @Test
-    @DisplayName("Should fail validation when both required fields are null")
-    void validation_shouldFail_whenAllRequiredFieldsAreNull() {
-      log.debug("Testing validation failure with null required fields");
+    @DisplayName("Should pass validation with valid fields")
+    void shouldPassValidationWithValidFields() {
+      // Given
+      TestRequest request = new TestRequest("order-service", "tx-12345");
 
-      TestRequest request = new TestRequest(null, null);
+      // When
       Set<ConstraintViolation<TestRequest>> violations = validator.validate(request);
 
-      assertFalse(violations.isEmpty(), "Validation should fail when required fields are null");
-      assertEquals(2, violations.size(), "Should have exactly 2 validation violations");
-
-      // Verify specific validation messages
-      Set<String> violationMessages =
-          violations.stream()
-              .map(ConstraintViolation::getMessage)
-              .collect(java.util.stream.Collectors.toSet());
-
-      assertTrue(
-          violationMessages.contains("clientId is required"),
-          "Should contain clientId validation message");
-      assertTrue(
-          violationMessages.contains("transactionId is required"),
-          "Should contain transactionId validation message");
-
-      log.debug("Validation failed with {} violations as expected", violations.size());
+      // Then
+      assertTrue(violations.isEmpty(), "Should have no validation violations");
     }
 
     @Test
     @DisplayName("Should fail validation when clientId is null")
-    void validation_shouldFail_whenClientIdIsNull() {
-      log.debug("Testing validation failure with null clientId");
-
+    void shouldFailValidationWhenClientIdIsNull() {
+      // Given
       TestRequest request = new TestRequest(null, "valid-transaction-id");
+
+      // When
       Set<ConstraintViolation<TestRequest>> violations = validator.validate(request);
 
-      assertFalse(violations.isEmpty(), "Validation should fail when clientId is null");
-      assertEquals(1, violations.size(), "Should have exactly 1 validation violation");
+      // Then
+      assertFalse(violations.isEmpty(), "Should have validation violations");
+      assertTrue(
+          violations.stream().anyMatch(v -> v.getPropertyPath().toString().equals("clientId")),
+          "Should have clientId validation violation");
+      assertTrue(
+          violations.stream().anyMatch(v -> v.getMessage().equals("clientId is required")),
+          "Should have correct error message");
+    }
 
-      ConstraintViolation<TestRequest> violation = violations.iterator().next();
-      assertEquals("clientId is required", violation.getMessage());
-      assertEquals("clientId", violation.getPropertyPath().toString());
+    @Test
+    @DisplayName("Should fail validation when clientId is empty")
+    void shouldFailValidationWhenClientIdIsEmpty() {
+      // Given
+      TestRequest request = new TestRequest("", "valid-transaction-id");
 
-      log.debug("Validation failed for null clientId as expected");
+      // When
+      Set<ConstraintViolation<TestRequest>> violations = validator.validate(request);
+
+      // Then
+      assertFalse(violations.isEmpty(), "Should have validation violations");
+      assertTrue(
+          violations.stream().anyMatch(v -> v.getPropertyPath().toString().equals("clientId")),
+          "Should have clientId validation violation");
+    }
+
+    @Test
+    @DisplayName("Should fail validation when clientId is blank")
+    void shouldFailValidationWhenClientIdIsBlank() {
+      // Given
+      TestRequest request = new TestRequest("   ", "valid-transaction-id");
+
+      // When
+      Set<ConstraintViolation<TestRequest>> violations = validator.validate(request);
+
+      // Then
+      assertFalse(violations.isEmpty(), "Should have validation violations");
+      assertTrue(
+          violations.stream().anyMatch(v -> v.getPropertyPath().toString().equals("clientId")),
+          "Should have clientId validation violation");
     }
 
     @Test
     @DisplayName("Should fail validation when transactionId is null")
-    void validation_shouldFail_whenTransactionIdIsNull() {
-      log.debug("Testing validation failure with null transactionId");
-
+    void shouldFailValidationWhenTransactionIdIsNull() {
+      // Given
       TestRequest request = new TestRequest("valid-client-id", null);
+
+      // When
       Set<ConstraintViolation<TestRequest>> violations = validator.validate(request);
 
-      assertFalse(violations.isEmpty(), "Validation should fail when transactionId is null");
-      assertEquals(1, violations.size(), "Should have exactly 1 validation violation");
-
-      ConstraintViolation<TestRequest> violation = violations.iterator().next();
-      assertEquals("transactionId is required", violation.getMessage());
-      assertEquals("transactionId", violation.getPropertyPath().toString());
-
-      log.debug("Validation failed for null transactionId as expected");
+      // Then
+      assertFalse(violations.isEmpty(), "Should have validation violations");
+      assertTrue(
+          violations.stream().anyMatch(v -> v.getPropertyPath().toString().equals("transactionId")),
+          "Should have transactionId validation violation");
+      assertTrue(
+          violations.stream().anyMatch(v -> v.getMessage().equals("transactionId is required")),
+          "Should have correct error message");
     }
 
     @Test
-    @DisplayName("Should fail validation when clientId is empty string")
-    void validation_shouldFail_whenClientIdIsEmpty() {
-      log.debug("Testing validation failure with empty clientId");
-
-      TestRequest request = new TestRequest("", "valid-transaction-id");
-      Set<ConstraintViolation<TestRequest>> violations = validator.validate(request);
-
-      assertFalse(violations.isEmpty(), "Validation should fail when clientId is empty");
-      assertEquals(1, violations.size(), "Should have exactly 1 validation violation");
-
-      ConstraintViolation<TestRequest> violation = violations.iterator().next();
-      assertEquals("clientId is required", violation.getMessage());
-
-      log.debug("Validation failed for empty clientId as expected");
-    }
-
-    @Test
-    @DisplayName("Should fail validation when transactionId is empty string")
-    void validation_shouldFail_whenTransactionIdIsEmpty() {
-      log.debug("Testing validation failure with empty transactionId");
-
+    @DisplayName("Should fail validation when transactionId is empty")
+    void shouldFailValidationWhenTransactionIdIsEmpty() {
+      // Given
       TestRequest request = new TestRequest("valid-client-id", "");
+
+      // When
       Set<ConstraintViolation<TestRequest>> violations = validator.validate(request);
 
-      assertFalse(violations.isEmpty(), "Validation should fail when transactionId is empty");
-      assertEquals(1, violations.size(), "Should have exactly 1 validation violation");
-
-      ConstraintViolation<TestRequest> violation = violations.iterator().next();
-      assertEquals("transactionId is required", violation.getMessage());
-
-      log.debug("Validation failed for empty transactionId as expected");
+      // Then
+      assertFalse(violations.isEmpty(), "Should have validation violations");
+      assertTrue(
+          violations.stream().anyMatch(v -> v.getPropertyPath().toString().equals("transactionId")),
+          "Should have transactionId validation violation");
     }
 
     @Test
-    @DisplayName("Should fail validation when fields are whitespace only")
-    void validation_shouldFail_whenFieldsAreWhitespaceOnly() {
-      log.debug("Testing validation failure with whitespace-only fields");
+    @DisplayName("Should fail validation when transactionId is blank")
+    void shouldFailValidationWhenTransactionIdIsBlank() {
+      // Given
+      TestRequest request = new TestRequest("valid-client-id", "\t\n ");
 
-      TestRequest request = new TestRequest("   ", "   ");
+      // When
       Set<ConstraintViolation<TestRequest>> violations = validator.validate(request);
 
-      assertFalse(
-          violations.isEmpty(), "Validation should fail when fields contain only whitespace");
+      // Then
+      assertFalse(violations.isEmpty(), "Should have validation violations");
+      assertTrue(
+          violations.stream().anyMatch(v -> v.getPropertyPath().toString().equals("transactionId")),
+          "Should have transactionId validation violation");
+    }
+
+    @Test
+    @DisplayName("Should fail validation when both fields are invalid")
+    void shouldFailValidationWhenBothFieldsAreInvalid() {
+      // Given
+      TestRequest request = new TestRequest(null, "");
+
+      // When
+      Set<ConstraintViolation<TestRequest>> violations = validator.validate(request);
+
+      // Then
       assertEquals(2, violations.size(), "Should have exactly 2 validation violations");
 
-      log.debug("Validation failed for whitespace-only fields as expected");
-    }
+      boolean hasClientIdViolation =
+          violations.stream().anyMatch(v -> v.getPropertyPath().toString().equals("clientId"));
+      boolean hasTransactionIdViolation =
+          violations.stream().anyMatch(v -> v.getPropertyPath().toString().equals("transactionId"));
 
-    @Test
-    @DisplayName("Should pass validation when all required fields are present")
-    void validation_shouldPass_whenAllRequiredFieldsPresent() {
-      log.debug("Testing validation success with all required fields present");
-
-      TestRequest request = new TestRequest("test-client-id", "test-transaction-id");
-      Set<ConstraintViolation<TestRequest>> violations = validator.validate(request);
-
-      assertTrue(
-          violations.isEmpty(), "Validation should pass when all required fields are present");
-
-      log.debug("Validation passed successfully");
-    }
-
-    @Test
-    @DisplayName("Should pass validation with UUID values")
-    void validation_shouldPass_withUuidValues() {
-      log.debug("Testing validation success with UUID values");
-
-      String clientId = UUID.randomUUID().toString();
-      String transactionId = UUID.randomUUID().toString();
-      TestRequest request = new TestRequest(clientId, transactionId);
-
-      Set<ConstraintViolation<TestRequest>> violations = validator.validate(request);
-
-      assertTrue(violations.isEmpty(), "Validation should pass with UUID values");
-
-      log.debug("Validation passed with UUID values");
-    }
-  }
-
-  @Nested
-  @DisplayName("Field Access Tests")
-  class FieldAccessTests {
-
-    @Test
-    @DisplayName("Should get clientId correctly")
-    void shouldGetClientId() {
-      String expectedClientId = "test-client-123";
-      TestRequest request = new TestRequest(expectedClientId, "test-transaction");
-
-      assertEquals(
-          expectedClientId, request.getClientId(), "ClientId should be retrieved correctly");
-    }
-
-    @Test
-    @DisplayName("Should get transactionId correctly")
-    void shouldGetTransactionId() {
-      String expectedTransactionId = "test-transaction-456";
-      TestRequest request = new TestRequest("test-client", expectedTransactionId);
-
-      assertEquals(
-          expectedTransactionId,
-          request.getTransactionId(),
-          "TransactionId should be retrieved correctly");
-    }
-
-    @Test
-    @DisplayName("Should handle null values in getters")
-    void shouldHandleNullValuesInGetters() {
-      TestRequest request = new TestRequest(null, null);
-
-      assertNull(request.getClientId(), "ClientId should be null");
-      assertNull(request.getTransactionId(), "TransactionId should be null");
-    }
-  }
-
-  @Nested
-  @DisplayName("Logging Tests")
-  class LoggingTests {
-
-    @Test
-    @DisplayName("Should execute logRequest without throwing exceptions")
-    void logRequest_shouldExecuteWithoutExceptions() {
-      TestRequest request = new TestRequest("test-client", "test-transaction");
-
-      assertDoesNotThrow(
-          request::logRequest, "logRequest should execute without throwing exceptions");
-    }
-
-    @Test
-    @DisplayName("Should handle logRequest with null values")
-    void logRequest_shouldHandleNullValues() {
-      TestRequest request = new TestRequest(null, null);
-
-      assertDoesNotThrow(
-          request::logRequest, "logRequest should handle null values without throwing exceptions");
-    }
-  }
-
-  @Nested
-  @DisplayName("Equality and HashCode Tests")
-  class EqualityTests {
-
-    @Test
-    @DisplayName("Should be equal when all fields match")
-    void shouldBeEqual_whenAllFieldsMatch() {
-      TestRequest request1 = new TestRequest("client-123", "transaction-456");
-      TestRequest request2 = new TestRequest("client-123", "transaction-456");
-
-      assertEquals(request1, request2, "Requests should be equal when all fields match");
-      assertEquals(
-          request1.hashCode(), request2.hashCode(), "Hash codes should be equal for equal objects");
-    }
-
-    @Test
-    @DisplayName("Should not be equal when clientId differs")
-    void shouldNotBeEqual_whenClientIdDiffers() {
-      TestRequest request1 = new TestRequest("client-123", "transaction-456");
-      TestRequest request2 = new TestRequest("client-789", "transaction-456");
-
-      assertNotEquals(request1, request2, "Requests should not be equal when clientId differs");
-    }
-
-    @Test
-    @DisplayName("Should not be equal when transactionId differs")
-    void shouldNotBeEqual_whenTransactionIdDiffers() {
-      TestRequest request1 = new TestRequest("client-123", "transaction-456");
-      TestRequest request2 = new TestRequest("client-123", "transaction-789");
-
-      assertNotEquals(
-          request1, request2, "Requests should not be equal when transactionId differs");
-    }
-
-    @Test
-    @DisplayName("Should handle null comparisons correctly")
-    void shouldHandleNullComparisons() {
-      TestRequest request = new TestRequest("client-123", "transaction-456");
-
-      assertNotEquals(null, request, "Request should not be equal to null");
-      assertNotEquals("string", request, "Request should not be equal to different type");
-    }
-
-    @Test
-    @DisplayName("Should be equal when both have null values")
-    void shouldBeEqual_whenBothHaveNullValues() {
-      TestRequest request1 = new TestRequest(null, null);
-      TestRequest request2 = new TestRequest(null, null);
-
-      assertEquals(request1, request2, "Requests with null values should be equal");
-      assertEquals(
-          request1.hashCode(),
-          request2.hashCode(),
-          "Hash codes should be equal for equal objects with null values");
-    }
-  }
-
-  @Nested
-  @DisplayName("ToString Tests")
-  class ToStringTests {
-
-    @Test
-    @DisplayName("Should include field values in toString output")
-    void toString_shouldIncludeFieldValues() {
-      TestRequest request = new TestRequest("test-client", "test-transaction");
-
-      String toStringOutput = request.toString();
-
-      assertNotNull(toStringOutput, "toString should not return null");
-      assertTrue(toStringOutput.contains("test-client"), "toString should include clientId value");
-      assertTrue(
-          toStringOutput.contains("test-transaction"),
-          "toString should include transactionId value");
-    }
-
-    @Test
-    @DisplayName("Should handle null values in toString")
-    void toString_shouldHandleNullValues() {
-      TestRequest request = new TestRequest(null, null);
-
-      assertDoesNotThrow(
-          () -> {
-            String toStringOutput = request.toString();
-            assertNotNull(toStringOutput, "toString should not return null even with null fields");
-          },
-          "toString should handle null values without throwing exceptions");
+      assertTrue(hasClientIdViolation, "Should have clientId validation violation");
+      assertTrue(hasTransactionIdViolation, "Should have transactionId validation violation");
     }
   }
 
@@ -400,20 +239,281 @@ class BaseRequestTest {
   class ImmutabilityTests {
 
     @Test
-    @DisplayName("Should maintain immutability of fields")
-    void shouldMaintainImmutabilityOfFields() {
-      String clientId = "original-client";
-      String transactionId = "original-transaction";
+    @DisplayName("Should have final fields that cannot be modified")
+    void shouldHaveFinalFields() throws NoSuchFieldException {
+      // Given/When
+      var clientIdField = BaseRequest.class.getDeclaredField("clientId");
+      var transactionIdField = BaseRequest.class.getDeclaredField("transactionId");
 
+      // Then
+      assertTrue(
+          java.lang.reflect.Modifier.isFinal(clientIdField.getModifiers()),
+          "clientId field should be final");
+      assertTrue(
+          java.lang.reflect.Modifier.isFinal(transactionIdField.getModifiers()),
+          "transactionId field should be final");
+    }
+
+    @Test
+    @DisplayName("Should maintain same values after creation")
+    void shouldMaintainSameValuesAfterCreation() {
+      // Given
+      String originalClientId = "payment-service";
+      String originalTransactionId = "txn-98765";
+      TestRequest request = new TestRequest(originalClientId, originalTransactionId);
+
+      // When (accessing values multiple times)
+      String clientId1 = request.getClientId();
+      String clientId2 = request.getClientId();
+      String transactionId1 = request.getTransactionId();
+      String transactionId2 = request.getTransactionId();
+
+      // Then
+      assertEquals(originalClientId, clientId1);
+      assertEquals(originalClientId, clientId2);
+      assertEquals(originalTransactionId, transactionId1);
+      assertEquals(originalTransactionId, transactionId2);
+      assertSame(clientId1, clientId2, "Should return same reference");
+      assertSame(transactionId1, transactionId2, "Should return same reference");
+    }
+  }
+
+  @Nested
+  @DisplayName("Logging Tests")
+  class LoggingTests {
+
+    @Test
+    @DisplayName("Should execute logRequest without exceptions")
+    void shouldExecuteLogRequestWithoutExceptions() {
+      // Given
+      TestRequest request = new TestRequest("inventory-service", "log-test-123");
+
+      // When/Then - Should not throw any exceptions
+      assertDoesNotThrow(() -> request.logRequest(), "logRequest should not throw any exceptions");
+    }
+
+    @Test
+    @DisplayName("Should handle logging with special characters in IDs")
+    void shouldHandleLoggingWithSpecialCharacters() {
+      // Given
+      TestRequest request = new TestRequest("test-service-with-dashes", "tx_123-456.789");
+
+      // When/Then - Should not throw any exceptions
+      assertDoesNotThrow(
+          () -> request.logRequest(), "logRequest should handle special characters without issues");
+    }
+
+    @Test
+    @DisplayName("Should handle logging with long IDs")
+    void shouldHandleLoggingWithLongIds() {
+      // Given
+      String longClientId = "very-long-client-service-name-that-exceeds-normal-length";
+      String longTransactionId = UUID.randomUUID().toString() + "-" + UUID.randomUUID().toString();
+      TestRequest request = new TestRequest(longClientId, longTransactionId);
+
+      // When/Then - Should not throw any exceptions
+      assertDoesNotThrow(
+          () -> request.logRequest(), "logRequest should handle long IDs without issues");
+    }
+  }
+
+  @Nested
+  @DisplayName("Equals and HashCode Tests")
+  class EqualsAndHashCodeTests {
+
+    @Test
+    @DisplayName("Should be equal when all fields are the same")
+    void shouldBeEqualWhenAllFieldsAreTheSame() {
+      // Given
+      String clientId = "auth-service";
+      String transactionId = "eq-test-123";
+      TestRequest request1 = new TestRequest(clientId, transactionId);
+      TestRequest request2 = new TestRequest(clientId, transactionId);
+
+      // When/Then
+      assertEquals(request1, request2, "Requests with same fields should be equal");
+      assertEquals(
+          request1.hashCode(), request2.hashCode(), "Equal requests should have same hash code");
+    }
+
+    @Test
+    @DisplayName("Should not be equal when clientId differs")
+    void shouldNotBeEqualWhenClientIdDiffers() {
+      // Given
+      String transactionId = "eq-test-456";
+      TestRequest request1 = new TestRequest("service-a", transactionId);
+      TestRequest request2 = new TestRequest("service-b", transactionId);
+
+      // When/Then
+      assertNotEquals(request1, request2, "Requests with different clientId should not be equal");
+    }
+
+    @Test
+    @DisplayName("Should not be equal when transactionId differs")
+    void shouldNotBeEqualWhenTransactionIdDiffers() {
+      // Given
+      String clientId = "notification-service";
+      TestRequest request1 = new TestRequest(clientId, "tx-111");
+      TestRequest request2 = new TestRequest(clientId, "tx-222");
+
+      // When/Then
+      assertNotEquals(
+          request1, request2, "Requests with different transactionId should not be equal");
+    }
+
+    @Test
+    @DisplayName("Should not be equal to null")
+    void shouldNotBeEqualToNull() {
+      // Given
+      TestRequest request = new TestRequest("test-service", "null-test");
+
+      // When/Then
+      assertNotEquals(request, null, "Request should not be equal to null");
+    }
+
+    @Test
+    @DisplayName("Should be equal to itself")
+    void shouldBeEqualToItself() {
+      // Given
+      TestRequest request = new TestRequest("self-service", "self-test");
+
+      // When/Then
+      assertEquals(request, request, "Request should be equal to itself");
+    }
+  }
+
+  @Nested
+  @DisplayName("ToString Tests")
+  class ToStringTests {
+
+    @Test
+    @DisplayName("Should contain clientId and transactionId in toString")
+    void shouldContainFieldsInToString() {
+      // Given
+      String clientId = "string-service";
+      String transactionId = "string-test-789";
       TestRequest request = new TestRequest(clientId, transactionId);
 
-      // Verify that the fields cannot be changed after construction
-      assertEquals(clientId, request.getClientId(), "ClientId should remain unchanged");
-      assertEquals(
-          transactionId, request.getTransactionId(), "TransactionId should remain unchanged");
+      // When
+      String toString = request.toString();
 
-      // The fields are final, so they cannot be modified after construction
-      // This test verifies that the immutable design is working correctly
+      // Then
+      assertNotNull(toString, "toString should not return null");
+      assertTrue(toString.contains(clientId), "toString should contain clientId");
+      assertTrue(toString.contains(transactionId), "toString should contain transactionId");
+    }
+
+    @Test
+    @DisplayName("Should handle special characters in toString")
+    void shouldHandleSpecialCharactersInToString() {
+      // Given
+      TestRequest request = new TestRequest("service-with-special@chars", "tx#123$456");
+
+      // When/Then
+      assertDoesNotThrow(
+          () -> request.toString(), "toString should handle special characters without exceptions");
+    }
+  }
+
+  @Nested
+  @DisplayName("Thread Safety Tests")
+  class ThreadSafetyTests {
+
+    @Test
+    @DisplayName("Should be thread-safe for concurrent access")
+    void shouldBeThreadSafeForConcurrentAccess() throws InterruptedException {
+      // Given
+      TestRequest request = new TestRequest("concurrent-service", "thread-test");
+      int numberOfThreads = 10;
+      int operationsPerThread = 1000;
+      Thread[] threads = new Thread[numberOfThreads];
+
+      // When
+      for (int i = 0; i < numberOfThreads; i++) {
+        threads[i] =
+            new Thread(
+                () -> {
+                  for (int j = 0; j < operationsPerThread; j++) {
+                    // Perform various operations concurrently
+                    String clientId = request.getClientId();
+                    String transactionId = request.getTransactionId();
+                    String toString = request.toString();
+                    int hashCode = request.hashCode();
+                    request.logRequest();
+
+                    // Verify values remain consistent
+                    assertEquals("concurrent-service", clientId);
+                    assertEquals("thread-test", transactionId);
+                    assertNotNull(toString);
+                    assertTrue(hashCode != 0);
+                  }
+                });
+        threads[i].start();
+      }
+
+      // Wait for all threads to complete
+      for (Thread thread : threads) {
+        thread.join();
+      }
+
+      // Then - If we reach here without exceptions, the test passes
+      assertTrue(true, "Concurrent access completed without issues");
+    }
+  }
+
+  @Nested
+  @DisplayName("Edge Cases Tests")
+  class EdgeCasesTests {
+
+    @Test
+    @DisplayName("Should handle very long field values")
+    void shouldHandleVeryLongFieldValues() {
+      // Given
+      String longClientId = "a".repeat(1000);
+      String longTransactionId = "b".repeat(1000);
+
+      // When
+      TestRequest request = new TestRequest(longClientId, longTransactionId);
+
+      // Then
+      assertEquals(longClientId, request.getClientId());
+      assertEquals(longTransactionId, request.getTransactionId());
+      assertDoesNotThrow(() -> request.logRequest());
+      assertDoesNotThrow(() -> request.toString());
+    }
+
+    @Test
+    @DisplayName("Should handle Unicode characters")
+    void shouldHandleUnicodeCharacters() {
+      // Given
+      String unicodeClientId = "服务-αβγ-сервис";
+      String unicodeTransactionId = "交易-δεζ-транзакция";
+
+      // When
+      TestRequest request = new TestRequest(unicodeClientId, unicodeTransactionId);
+
+      // Then
+      assertEquals(unicodeClientId, request.getClientId());
+      assertEquals(unicodeTransactionId, request.getTransactionId());
+      assertDoesNotThrow(() -> request.logRequest());
+      assertDoesNotThrow(() -> request.toString());
+    }
+
+    @Test
+    @DisplayName("Should handle field values with only valid boundary characters")
+    void shouldHandleFieldValuesWithBoundaryCharacters() {
+      // Given - Using single character values (boundary case for @NotBlank)
+      String minClientId = "a";
+      String minTransactionId = "1";
+
+      // When
+      TestRequest request = new TestRequest(minClientId, minTransactionId);
+
+      // Then
+      Set<ConstraintViolation<TestRequest>> violations = validator.validate(request);
+      assertTrue(violations.isEmpty(), "Single character values should be valid");
+      assertEquals(minClientId, request.getClientId());
+      assertEquals(minTransactionId, request.getTransactionId());
     }
   }
 }

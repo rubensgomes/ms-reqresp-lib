@@ -75,6 +75,8 @@ dependencies {
     implementation(libs.slf4j.api)
 
     // ########## testImplementation ##########################################
+    // org.junit.jupiter:junit-jupiter-params
+    testImplementation(libs.junit.jupiter.params)
     // Logback bundle:
     //  ch.qos.logback:logback-classic
     //  ch.qos.logback:logback-core

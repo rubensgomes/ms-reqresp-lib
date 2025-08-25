@@ -21,7 +21,6 @@ import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -41,8 +40,8 @@ import lombok.extern.slf4j.Slf4j;
  * <ul>
  *   <li><strong>Core Fields (Final):</strong> clientId, transactionId, and status are immutable for
  *       consistency and thread safety
- *   <li><strong>Optional Fields (Mutable):</strong> message and error can be set after construction
- *       for flexible response building
+ *   <li><strong>Optional Fields (Mutable):</strong> error can be set after construction for
+ *       flexible response building
  *   <li><strong>Thread Safety:</strong> Core correlation data is thread-safe by design
  *   <li><strong>Defensive Programming:</strong> Prevents accidental modification of critical fields
  * </ul>
@@ -54,7 +53,6 @@ import lombok.extern.slf4j.Slf4j;
  * <ul>
  *   <li><strong>Success Indication:</strong> Clear success/failure status for all operations
  *   <li><strong>Error Context:</strong> Optional error details for failure scenarios
- *   <li><strong>Human-Readable Messages:</strong> Optional messages for user-facing responses
  *   <li><strong>Structured Error Handling:</strong> Standardized error information format
  * </ul>
  *
@@ -107,9 +105,6 @@ import lombok.extern.slf4j.Slf4j;
  *     user.getCreatedAt()
  * );
  *
- * // Add optional context message
- * response.setMessage("User created successfully");
- *
  * // Log the response for debugging
  * response.logResponse();
  * }</pre>
@@ -126,13 +121,12 @@ import lombok.extern.slf4j.Slf4j;
  * );
  *
  * // Add error details
- * Error error = new Error(
- *     ApplicationErrorCode.VALIDATION_DUPLICATE_VALUE.getCode(),
- *     ApplicationErrorCode.VALIDATION_DUPLICATE_VALUE.getDescription(),
- *     "A user with this email address already exists"
+ * Error error = new ApplicationError(
+ *     "A user with this email address already exists",
+ *     ApplicationErrorCode.VALIDATION_DUPLICATE_VALUE,
+ *     "Email validation failed during user creation"
  * );
  * errorResponse.setError(error);
- * errorResponse.setMessage("User creation failed due to validation errors");
  *
  * // Log the error response
  * errorResponse.logResponse();
@@ -158,9 +152,7 @@ import lombok.extern.slf4j.Slf4j;
  *             user.getCreatedAt()
  *         );
  *
- *         response.setMessage("User created successfully");
  *         response.logResponse();
- *
  *         return ResponseEntity.ok(response);
  *
  *     } catch (DuplicateUserException e) {
@@ -180,14 +172,13 @@ import lombok.extern.slf4j.Slf4j;
  *         null, null, null, null
  *     );
  *
- *     Error error = new Error(
- *         determineErrorCode(e).getCode(),
- *         determineErrorCode(e).getDescription(),
- *         e.getMessage()
+ *     Error error = new ApplicationError(
+ *         e.getMessage(),
+ *         determineErrorCode(e),
+ *         e.getCause() != null ? e.getCause().getMessage() : null
  *     );
  *
  *     errorResponse.setError(error);
- *     errorResponse.setMessage("Operation failed");
  *     errorResponse.logResponse();
  *
  *     return ResponseEntity.status(status).body(errorResponse);
@@ -206,9 +197,7 @@ import lombok.extern.slf4j.Slf4j;
  *     null, null, null
  * );
  *
- * asyncResponse.setMessage("User creation is being processed. Check status using task ID: " + taskId);
  * asyncResponse.logResponse();
- *
  * return ResponseEntity.accepted().body(asyncResponse);
  * }</pre>
  *
@@ -251,17 +240,6 @@ import lombok.extern.slf4j.Slf4j;
  *
  * <h3>Optional Mutable Fields</h3>
  *
- * <h4>Message</h4>
- *
- * <p>Human-readable context message:
- *
- * <ul>
- *   <li><strong>User Communication:</strong> Suitable for display to end users
- *   <li><strong>Operational Context:</strong> Provides additional information about the operation
- *   <li><strong>Success Details:</strong> Explains what was accomplished
- *   <li><strong>Guidance:</strong> Can include next steps or recommendations
- * </ul>
- *
  * <h4>Error</h4>
  *
  * <p>Structured error information for failure scenarios:
@@ -280,17 +258,17 @@ import lombok.extern.slf4j.Slf4j;
  * <pre>{@code
  * // Handle circuit breaker scenarios
  * if (circuitBreaker.isOpen()) {
- *     BaseResponse fallbackResponse = new UserCreateResponse(
+ *     UserCreateResponse fallbackResponse = new UserCreateResponse(
  *         request.getClientId(),
  *         request.getTransactionId(),
  *         Status.ERROR,
  *         null, null, null, null
  *     );
  *
- *     Error error = new Error(
- *         ApplicationErrorCode.SYSTEM_SERVICE_UNAVAILABLE.getCode(),
- *         ApplicationErrorCode.SYSTEM_SERVICE_UNAVAILABLE.getDescription(),
- *         "User service is temporarily unavailable"
+ *     Error error = new ApplicationError(
+ *         "User service is temporarily unavailable",
+ *         ApplicationErrorCode.SYSTEM_SERVICE_UNAVAILABLE,
+ *         "Circuit breaker is open"
  *     );
  *
  *     fallbackResponse.setError(error);
@@ -309,7 +287,6 @@ import lombok.extern.slf4j.Slf4j;
  *         Status.SUCCESS
  *     );
  *
- *     response.setMessage("User creation compensated successfully");
  *     return response;
  * }
  * }</pre>
@@ -338,7 +315,6 @@ import lombok.extern.slf4j.Slf4j;
  *         Status.SUCCESS
  *     );
  *
- *     response.setMessage("Service is healthy");
  *     return ResponseEntity.ok(response);
  * }
  * }</pre>
@@ -348,7 +324,6 @@ import lombok.extern.slf4j.Slf4j;
  * <ul>
  *   <li><strong>Always Set Status:</strong> Every response must have an explicit status
  *   <li><strong>Correlate Responses:</strong> Always use the request's clientId and transactionId
- *   <li><strong>Provide Context:</strong> Use message field for user-friendly information
  *   <li><strong>Structure Errors:</strong> Use the Error object for consistent error reporting
  *   <li><strong>Log Responses:</strong> Call logResponse() for debugging and monitoring
  *   <li><strong>Handle Async Operations:</strong> Use appropriate status for long-running
@@ -363,7 +338,8 @@ import lombok.extern.slf4j.Slf4j;
  *
  * <ul>
  *   <li><strong>Core Field Safety:</strong> Immutable core fields are thread-safe
- *   <li><strong>Optional Field Caution:</strong> Mutable fields require synchronization if shared
+ *   <li><strong>Optional Field Caution:</strong> Mutable error field requires synchronization if
+ *       shared
  *   <li><strong>Builder Pattern:</strong> Consider using builders for complex response construction
  *   <li><strong>Defensive Copying:</strong> Copy responses when sharing across threads
  * </ul>
@@ -378,7 +354,6 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 @Data
-@RequiredArgsConstructor
 public abstract class BaseResponse {
   /** Identifier of the client application originating the request. */
   @NotBlank(message = "clientId is required")
@@ -392,20 +367,16 @@ public abstract class BaseResponse {
   @NotNull(message = "status is required")
   private final Status status;
 
-  /** Optional human-readable message providing additional context. */
-  @Nullable private String message;
-
   /** Optional error details when the response indicates a failure status. */
   @Nullable private Error error;
 
   /** Logs the response details for debugging and tracing purposes. */
   public void logResponse() {
     log.debug(
-        "Response - clientId: {}, transactionId: {}, status: {}, message: {}, error: {}",
+        "Response - clientId: {}, transactionId: {}, status: {}, error: {}",
         clientId,
         transactionId,
         status,
-        message,
         error);
   }
 }

@@ -61,11 +61,11 @@ import jakarta.validation.constraints.NotNull;
  * }</pre>
  *
  * @author Rubens Gomes
- * @since 0.0.1
  * @see jakarta.validation.constraints.NotBlank
  * @see jakarta.validation.constraints.NotNull
  * @see jakarta.annotation.Nullable
  * @see ErrorCode
+ * @since 0.0.1
  */
 public interface Error {
   /**
@@ -81,7 +81,7 @@ public interface Error {
    * @return the error description, never null or blank
    */
   @NotBlank
-  String errorDescription();
+  String getErrorDescription();
 
   /**
    * Returns the native error text, which may include system-specific details.
@@ -90,13 +90,62 @@ public interface Error {
    * debugging or logging purposes. It can include stack traces, system error messages, or other
    * technical details that are not suitable for end-user display.
    *
+   * <p>The native error text is intended for diagnostic and debugging purposes and may include:
+   *
+   * <ul>
+   *   <li><strong>Stack Traces</strong> - Full exception stack traces for debugging
+   *   <li><strong>System Messages</strong> - Low-level system or database error messages
+   *   <li><strong>Diagnostic Information</strong> - Additional context from underlying systems
+   *   <li><strong>Technical Details</strong> - Information not suitable for end-user display
+   * </ul>
+   *
    * <p>This field is optional and may return null when no native error information is available or
-   * relevant.
+   * relevant. The native error text can be modified using {@link #setNativeErrorText(String)}.
    *
    * @return the native error text, or null if not available
+   * @see #setNativeErrorText(String)
    */
   @Nullable
-  String nativeErrorText();
+  String getNativeErrorText();
+
+  /**
+   * Sets the native error text for this error.
+   *
+   * <p>This method allows updating the optional native error text after the error object has been
+   * created. This can be useful for adding diagnostic information that becomes available during
+   * error processing or for enriching error context with additional system-specific details.
+   *
+   * <p>The native error text is intended for diagnostic and debugging purposes and may include:
+   *
+   * <ul>
+   *   <li><strong>Stack Traces</strong> - Full exception stack traces for debugging
+   *   <li><strong>System Messages</strong> - Low-level system or database error messages
+   *   <li><strong>Diagnostic Information</strong> - Additional context from underlying systems
+   *   <li><strong>Technical Details</strong> - Information not suitable for end-user display
+   * </ul>
+   *
+   * <p>The native error text must not be null, empty, or contain only whitespace characters as
+   * enforced by the {@code @NotBlank} validation annotation.
+   *
+   * <p>Usage example:
+   *
+   * <pre>{@code
+   * Error error = new ApplicationError(
+   *     "Database operation failed",
+   *     DatabaseErrorCode.CONNECTION_FAILED,
+   *     "Initial connection attempt failed"
+   * );
+   *
+   * // Update with more detailed diagnostic information later
+   * error.setNativeErrorText("SQLException: Connection timeout after 30s at db.example.com:5432");
+   * }</pre>
+   *
+   * @param nativeErrorText the native error text to set, must not be null, empty, or
+   *     whitespace-only
+   * @throws jakarta.validation.ConstraintViolationException if the nativeErrorText is null, empty,
+   *     or whitespace-only
+   */
+  void setNativeErrorText(@NotBlank String nativeErrorText);
 
   /**
    * Returns the structured error code associated with this error.
@@ -141,5 +190,5 @@ public interface Error {
    * @see ErrorCode#getDescription()
    */
   @NotNull
-  ErrorCode errorCode();
+  ErrorCode getErrorCode();
 }

@@ -29,8 +29,8 @@
  * <ul>
  *   <li><strong>Standardized Request/Response Patterns:</strong> Consistent DTOs for all service
  *       communications with immutable design principles
- *   <li><strong>Unified Error Handling:</strong> Hierarchical error codes and standardized error
- *       responses
+ *   <li><strong>Unified Error Handling:</strong> Comprehensive error framework with structured
+ *       error codes and standardized error responses
  *   <li><strong>Distributed Tracing Support:</strong> Built-in correlation ID and client
  *       identification for end-to-end observability
  *   <li><strong>Thread-Safe Design:</strong> Immutable objects that can be safely shared across
@@ -52,6 +52,8 @@
  *       DTOs with client identification and correlation tracking
  *   <li>{@link com.rubensgomes.msreqresplib.BaseResponse} - Foundation for all response DTOs with
  *       status information and correlation tracking
+ *   <li>{@link com.rubensgomes.msreqresplib.Status} - Standardized status enumeration for request
+ *       lifecycle management and operation outcomes
  * </ul>
  *
  * <h3>Supporting Packages</h3>
@@ -61,8 +63,8 @@
  * <p>Specialized Data Transfer Objects for specific scenarios:
  *
  * <ul>
- *   <li>{@link com.rubensgomes.msreqresplib.dto.ApplicationErrorResponse} - Standardized error
- *       responses with detailed error information
+ *   <li>{@link com.rubensgomes.msreqresplib.dto.ApplicationErrorResponse} - Specialized error
+ *       response DTO with guaranteed error information and enhanced validation
  * </ul>
  *
  * <h4>{@link com.rubensgomes.msreqresplib.error}</h4>
@@ -70,10 +72,12 @@
  * <p>Comprehensive error handling framework:
  *
  * <ul>
- *   <li>{@link com.rubensgomes.msreqresplib.error.ErrorCode} - Interface for error code contracts
- *   <li>{@link com.rubensgomes.msreqresplib.error.ApplicationErrorCode} - Standard error codes with
- *       hierarchical naming (XXXGN### for generic, XXXMS### for service-specific)
- *   <li>{@link com.rubensgomes.msreqresplib.error.Error} - Error data structures
+ *   <li>{@link com.rubensgomes.msreqresplib.error.ErrorCode} - Interface for standardized error
+ *       code contracts and implementations
+ *   <li>{@link com.rubensgomes.msreqresplib.error.Error} - Core interface for error data structures
+ *       and comprehensive error reporting
+ *   <li>{@link com.rubensgomes.msreqresplib.error.ApplicationError} - Concrete implementation of
+ *       the Error interface with Lombok integration and hybrid immutability
  * </ul>
  *
  * <h2>Key Features</h2>
@@ -84,11 +88,29 @@
  *
  * <ul>
  *   <li><strong>Thread Safety:</strong> Immutable objects can be safely shared across threads
+ *       without synchronization concerns
  *   <li><strong>Defensive Programming:</strong> Prevents unintended state changes after
- *       construction
- *   <li><strong>Memory Efficiency:</strong> Objects can be safely cached and reused
- *   <li><strong>Functional Programming:</strong> Supports functional programming paradigms
- *   <li><strong>GC Friendly:</strong> Reduced garbage collection pressure
+ *       construction, reducing bugs
+ *   <li><strong>Memory Efficiency:</strong> Objects can be safely cached and reused across multiple
+ *       operations
+ *   <li><strong>Functional Programming:</strong> Supports functional programming paradigms and
+ *       method chaining
+ *   <li><strong>GC Friendly:</strong> Reduced garbage collection pressure through object reuse
+ * </ul>
+ *
+ * <h3>Hybrid Immutability for Error Handling</h3>
+ *
+ * <p>Advanced immutability pattern that balances consistency with flexibility:
+ *
+ * <ul>
+ *   <li><strong>Core Field Immutability:</strong> Critical fields like error descriptions and error
+ *       codes are immutable once set
+ *   <li><strong>Diagnostic Mutability:</strong> Optional diagnostic information can be updated as
+ *       additional context becomes available
+ *   <li><strong>Thread-Safe Reads:</strong> Read operations on immutable fields are completely
+ *       thread-safe
+ *   <li><strong>Controlled Updates:</strong> Mutable fields are clearly documented and isolated for
+ *       safe concurrent access patterns
  * </ul>
  *
  * <h3>Distributed Tracing and Correlation</h3>
@@ -96,56 +118,47 @@
  * <p>Built-in support for microservices observability:
  *
  * <ul>
- *   <li><strong>Client Identification:</strong> Track which service originated each request
+ *   <li><strong>Client Identification:</strong> Track which service originated each request for
+ *       debugging and monitoring
  *   <li><strong>Transaction Correlation:</strong> End-to-end request tracing with unique
- *       transaction IDs
- *   <li><strong>Logging Integration:</strong> Built-in logging methods for debugging and monitoring
- *   <li><strong>OpenTelemetry Compatible:</strong> Transaction IDs can be used with distributed
- *       tracing systems
- *   <li><strong>API Gateway Integration:</strong> Seamless integration with gateway request
- *       enrichment
+ *       transaction IDs that propagate across service boundaries
+ *   <li><strong>Observability Integration:</strong> Seamless integration with distributed tracing
+ *       systems like Zipkin, Jaeger, and OpenTelemetry
+ *   <li><strong>Request Context:</strong> Automatic context propagation for enhanced debugging and
+ *       monitoring capabilities
  * </ul>
  *
- * <h3>Hierarchical Error Codes</h3>
+ * <h3>Validation and Type Safety</h3>
  *
- * <p>The library implements a sophisticated error code system with:
- *
- * <ul>
- *   <li><strong>Generic Codes (XXXGN###):</strong> Apply across all microservices
- *   <li><strong>Service-Specific Codes (XXXMS###):</strong> Unique to individual services
- *   <li><strong>Categorized Errors:</strong> Business, Payment, Resource, Security, System,
- *       Validation
- *   <li><strong>Machine and Human Readable:</strong> Both programmatic handling and user display
- * </ul>
- *
- * <h3>Validation Framework Integration</h3>
- *
- * <p>Comprehensive validation support:
+ * <p>Comprehensive validation framework integration:
  *
  * <ul>
- *   <li><strong>Jakarta Bean Validation:</strong> Standard annotations like {@code @NotBlank},
- *       {@code @Valid}
- *   <li><strong>Custom Messages:</strong> Clear, user-friendly validation error messages
- *   <li><strong>Runtime Validation:</strong> Automatic validation in Spring Boot controllers
- *   <li><strong>Consistent Error Responses:</strong> Standardized validation error handling
+ *   <li><strong>Jakarta Bean Validation:</strong> Runtime validation using standard annotations
+ *       like {@code @NotBlank}, {@code @NotNull}, {@code @Valid}
+ *   <li><strong>Custom Validation Messages:</strong> Clear, actionable validation error messages
+ *   <li><strong>Null Safety:</strong> Designed to minimize null pointer exceptions through proper
+ *       validation and nullable annotations
+ *   <li><strong>Type Safety:</strong> Strong typing prevents runtime type errors and improves IDE
+ *       support with comprehensive auto-completion
  * </ul>
  *
  * <h2>Usage Examples</h2>
  *
- * <h3>Creating Immutable Request DTOs</h3>
+ * <h3>Creating a Custom Request DTO</h3>
  *
  * <pre>{@code
  * @Data
  * @EqualsAndHashCode(callSuper = true)
- * public class UserCreateRequest extends BaseRequest {
+ * public class UserRegistrationRequest extends BaseRequest {
  *     @NotBlank(message = "Username is required")
  *     private final String username;
  *
  *     @Email(message = "Valid email address is required")
+ *     @NotBlank(message = "Email is required")
  *     private final String email;
  *
- *     public UserCreateRequest(String clientId, String transactionId,
- *                             String username, String email) {
+ *     public UserRegistrationRequest(String clientId, String transactionId,
+ *                                   String username, String email) {
  *         super(clientId, transactionId);
  *         this.username = username;
  *         this.email = email;
@@ -153,155 +166,235 @@
  * }
  * }</pre>
  *
- * <h3>Request Creation with Correlation</h3>
+ * <h3>Creating a Custom Response DTO</h3>
  *
  * <pre>{@code
- * // Generate correlation ID for end-to-end tracing
- * String transactionId = UUID.randomUUID().toString();
- * String clientId = "user-management-service";
+ * @Data
+ * @EqualsAndHashCode(callSuper = true)
+ * public class UserRegistrationResponse extends BaseResponse {
+ *     private final String userId;
+ *     private final String username;
+ *     private final Instant createdAt;
  *
- * UserCreateRequest request = new UserCreateRequest(
- *     clientId,
- *     transactionId,
- *     "john.doe",
- *     "john.doe@example.com"
- * );
- *
- * // Log the request for debugging and tracing
- * request.logRequest();
- * }</pre>
- *
- * <h3>Controller Integration with Validation</h3>
- *
- * <pre>{@code
- * @PostMapping("/users")
- * public ResponseEntity<UserCreateResponse> createUser(
- *         @Valid @RequestBody UserCreateRequest request) {
- *
- *     // Log incoming request for distributed tracing
- *     request.logRequest();
- *
- *     try {
- *         User user = userService.createUser(request);
- *
- *         UserCreateResponse response = new UserCreateResponse(
- *             request.getClientId(),
- *             request.getTransactionId(),
- *             Status.SUCCESS,
- *             user.getId(),
- *             user.getUsername()
- *         );
- *
- *         return ResponseEntity.ok(response);
- *     } catch (ValidationException e) {
- *         return handleValidationError(request, e);
+ *     public UserRegistrationResponse(String clientId, String transactionId,
+ *                                    Status status, String userId, String username,
+ *                                    Instant createdAt) {
+ *         super(clientId, transactionId, status);
+ *         this.userId = userId;
+ *         this.username = username;
+ *         this.createdAt = createdAt;
  *     }
  * }
  * }</pre>
  *
- * <h3>Error Response Handling</h3>
+ * <h3>Error Handling with ApplicationError</h3>
  *
  * <pre>{@code
- * // Creating a standardized error response
- * ApplicationErrorResponse errorResponse = new ApplicationErrorResponse(
- *     request.getClientId(),
- *     request.getTransactionId(),
- *     Status.ERROR,
- *     ApplicationErrorCode.VALIDATION_REQUIRED_FIELD.getCode(),
- *     ApplicationErrorCode.VALIDATION_REQUIRED_FIELD.getDescription(),
- *     "Username field cannot be empty",
- *     Instant.now()
- * );
- * }</pre>
+ * // Define custom error codes
+ * public enum UserServiceErrorCodes implements ErrorCode {
+ *     DUPLICATE_USERNAME("USR001", "Username already exists"),
+ *     INVALID_EMAIL("USR002", "Invalid email format"),
+ *     REGISTRATION_FAILED("USR003", "User registration failed");
  *
- * <h3>Distributed Tracing Integration</h3>
+ *     private final String code;
+ *     private final String description;
  *
- * <pre>{@code
- * // Pass transaction ID through service calls
- * public UserProfile getUserProfile(String userId, String transactionId) {
- *     // Use the same transaction ID for downstream calls
- *     ProfileRequest profileRequest = new ProfileRequest(
- *         "profile-service",
- *         transactionId,  // Same transaction ID for correlation
- *         userId
+ *     UserServiceErrorCodes(String code, String description) {
+ *         this.code = code;
+ *         this.description = description;
+ *     }
+ *
+ *     @Override
+ *     public String getCode() { return code; }
+ *
+ *     @Override
+ *     public String getDescription() { return description; }
+ * }
+ *
+ * // Create error responses
+ * try {
+ *     // Service operation
+ *     User newUser = userService.createUser(request);
+ *     return new UserRegistrationResponse(
+ *         request.getClientId(),
+ *         request.getTransactionId(),
+ *         Status.SUCCESS,
+ *         newUser.getId(),
+ *         newUser.getUsername(),
+ *         newUser.getCreatedAt()
  *     );
+ * } catch (DuplicateUsernameException e) {
+ *     // Create detailed error information
+ *     ApplicationError error = new ApplicationError(
+ *         "Username is already taken",
+ *         UserServiceErrorCodes.DUPLICATE_USERNAME
+ *     );
+ *     error.setNativeErrorText("Database constraint violation: unique_username");
  *
- *     return profileService.getProfile(profileRequest);
+ *     // Return guaranteed error response
+ *     return new ApplicationErrorResponse(
+ *         request.getClientId(),
+ *         request.getTransactionId(),
+ *         Status.ERROR,
+ *         error
+ *     );
  * }
  * }</pre>
  *
- * <h2>Integration Guidelines</h2>
+ * <h3>Response Logging and Monitoring</h3>
  *
- * <p>To integrate this library into your microservices:
+ * <pre>{@code
+ * @Service
+ * public class UserService {
  *
- * <ol>
- *   <li><strong>Extend Base Classes:</strong> Create service-specific request/response DTOs by
- *       extending {@link com.rubensgomes.msreqresplib.BaseRequest} and {@link
- *       com.rubensgomes.msreqresplib.BaseResponse}
- *   <li><strong>Implement Immutable Design:</strong> Use final fields and constructor-based
- *       initialization for all custom DTOs
- *   <li><strong>Enable Validation:</strong> Use {@code @Valid} annotations in controllers and apply
- *       appropriate validation annotations to fields
- *   <li><strong>Implement Correlation:</strong> Generate unique transaction IDs and propagate them
- *       through all service calls
- *   <li><strong>Use Standard Error Codes:</strong> Leverage existing error codes or add
- *       service-specific ones following the XXXGN### and XXXMS### naming conventions
- *   <li><strong>Add Logging:</strong> Call {@code logRequest()} methods for debugging and
- *       monitoring
- *   <li><strong>Document Extensions:</strong> Document any service-specific extensions or
- *       customizations
- * </ol>
+ *     public BaseResponse processUserRequest(UserRegistrationRequest request) {
+ *         BaseResponse response;
+ *         try {
+ *             // Process the request
+ *             response = createUser(request);
+ *         } catch (Exception e) {
+ *             response = createErrorResponse(request, e);
+ *         }
  *
- * <h2>Performance and Scalability</h2>
+ *         // Log response for monitoring and debugging
+ *         response.logResponse();
+ *         return response;
+ *     }
+ * }
+ * }</pre>
  *
- * <p>The library is designed for high-performance, scalable microservices:
+ * <h2>Best Practices</h2>
+ *
+ * <h3>Request/Response Design</h3>
  *
  * <ul>
- *   <li><strong>Zero-Copy Operations:</strong> Immutable objects can be shared safely
- *   <li><strong>No Synchronization Overhead:</strong> Thread-safe by design
- *   <li><strong>Memory Efficient:</strong> Objects can be cached and reused
- *   <li><strong>Fast Serialization:</strong> Optimized for JSON serialization/deserialization
- *   <li><strong>Minimal Dependencies:</strong> Lightweight with minimal external dependencies
+ *   <li><strong>Always extend base classes:</strong> Use {@code BaseRequest} and {@code
+ *       BaseResponse} for all DTOs to ensure consistency and correlation tracking
+ *   <li><strong>Immutable fields:</strong> Declare all fields as {@code final} and initialize them
+ *       in constructors for thread safety
+ *   <li><strong>Validation annotations:</strong> Use Jakarta Bean Validation annotations for data
+ *       integrity and clear error messages
+ *   <li><strong>Meaningful names:</strong> Use descriptive class and field names that clearly
+ *       indicate their purpose and constraints
+ *   <li><strong>Lombok integration:</strong> Use {@code @Data} and
+ *       {@code @EqualsAndHashCode(callSuper = true)} for cleaner code and proper inheritance
+ *       behavior
+ * </ul>
+ *
+ * <h3>Error Handling</h3>
+ *
+ * <ul>
+ *   <li><strong>Use ApplicationErrorResponse:</strong> Always use {@code ApplicationErrorResponse}
+ *       for error scenarios to guarantee error information presence
+ *   <li><strong>Implement ErrorCode interface:</strong> Create service-specific error codes that
+ *       implement {@code ErrorCode} for consistent error classification
+ *   <li><strong>Provide comprehensive context:</strong> Include meaningful error messages for users
+ *       and diagnostic information for developers
+ *   <li><strong>Maintain correlation:</strong> Always preserve transaction IDs in error responses
+ *       for end-to-end tracing
+ *   <li><strong>Structured error information:</strong> Use {@code ApplicationError} for rich error
+ *       context with optional native error text
+ * </ul>
+ *
+ * <h3>Status Management</h3>
+ *
+ * <ul>
+ *   <li><strong>Appropriate status values:</strong> Use {@code Status} enum values that accurately
+ *       reflect the operation outcome (SUCCESS, ERROR, PROCESSING)
+ *   <li><strong>Lifecycle tracking:</strong> Update status as operations progress through different
+ *       phases for long-running processes
+ *   <li><strong>Async operations:</strong> Use {@code Status.PROCESSING} for long-running
+ *       operations with separate completion notifications
+ *   <li><strong>Consistent mapping:</strong> Map status values to appropriate HTTP status codes in
+ *       REST APIs
+ * </ul>
+ *
+ * <h3>Logging and Monitoring</h3>
+ *
+ * <ul>
+ *   <li><strong>Response logging:</strong> Use the built-in {@code logResponse()} method for
+ *       consistent logging across all services
+ *   <li><strong>Transaction correlation:</strong> Ensure transaction IDs are logged for request
+ *       correlation and debugging
+ *   <li><strong>Error tracking:</strong> Log error responses with sufficient detail for monitoring
+ *       and alerting systems
+ *   <li><strong>Performance monitoring:</strong> Track response times and error rates by
+ *       transaction ID and client ID
+ * </ul>
+ *
+ * <h2>Dependencies</h2>
+ *
+ * <p>This library requires the following dependencies:
+ *
+ * <ul>
+ *   <li><strong>Jakarta Bean Validation API:</strong> For runtime validation support
+ *       ({@code @NotBlank}, {@code @NotNull}, {@code @Valid})
+ *   <li><strong>SLF4J:</strong> For logging abstraction and built-in response logging
+ *   <li><strong>Lombok:</strong> For code generation and boilerplate reduction (compile-time only)
+ *   <li><strong>Jakarta Annotations API:</strong> For {@code @Nullable} and other standard
+ *       annotations
  * </ul>
  *
  * <h2>Version Information</h2>
  *
- * <p>This library follows semantic versioning. Current major features:
+ * <p>Current version: 0.0.9-SNAPSHOT
+ *
+ * <p>This library follows semantic versioning principles. For version history and migration guides,
+ * please refer to the project's CHANGELOG.md file.
+ *
+ * <h2>Thread Safety</h2>
+ *
+ * <p>All classes in this library are designed with thread safety in mind:
  *
  * <ul>
- *   <li><strong>0.0.1:</strong> Initial release with basic DTOs and error handling
- *   <li><strong>0.0.2:</strong> Enhanced error codes with hierarchical naming and improved
- *       documentation
- *   <li><strong>0.0.3:</strong> Immutable design pattern, enhanced correlation tracking, and
- *       comprehensive validation framework integration
- *   <li><strong>0.0.4:</strong> Production-ready release with enhanced error handling,
- *       comprehensive unit testing, and improved documentation coverage
+ *   <li><strong>Immutable Core Fields:</strong> Base request/response fields are immutable and
+ *       thread-safe for concurrent read access
+ *   <li><strong>Hybrid Immutability:</strong> Error classes use a hybrid approach where core error
+ *       information is immutable while diagnostic information can be safely updated
+ *   <li><strong>No Shared State:</strong> Each request/response instance maintains its own state
+ *       without shared mutable references
+ *   <li><strong>Safe Construction:</strong> Objects are safely constructed before being shared
+ *       across threads
  * </ul>
  *
- * <h2>Dependencies and Requirements</h2>
+ * <h2>Performance Considerations</h2>
  *
- * <p>This library has minimal dependencies to ensure lightweight integration:
+ * <p>The design patterns used throughout this library provide several performance benefits:
  *
  * <ul>
- *   <li><strong>Java 11+:</strong> Minimum Java version required
- *   <li><strong>Jakarta Bean Validation:</strong> For runtime validation support
- *   <li><strong>SLF4J:</strong> For logging abstraction
- *   <li><strong>Lombok:</strong> For reducing boilerplate code (compile-time only)
+ *   <li><strong>Object Caching:</strong> Immutable objects can be safely cached and reused across
+ *       multiple operations
+ *   <li><strong>Memory Efficiency:</strong> Reduced object churn and garbage collection pressure
+ *       through immutable design
+ *   <li><strong>CPU Cache Friendly:</strong> Immutable objects are more likely to remain in CPU
+ *       cache due to their stable memory footprint
+ *   <li><strong>No Synchronization Overhead:</strong> Thread-safe operations without locks or
+ *       synchronization mechanisms
+ *   <li><strong>Lombok Optimization:</strong> Generated code is optimized for performance and
+ *       memory usage
  * </ul>
  *
- * <p>Optional dependencies for enhanced functionality:
+ * <h2>Testing Support</h2>
+ *
+ * <p>The library design facilitates comprehensive testing:
  *
  * <ul>
- *   <li><strong>Spring Boot:</strong> For controller integration and auto-configuration
- *   <li><strong>Jackson:</strong> For JSON serialization/deserialization
- *   <li><strong>OpenTelemetry:</strong> For distributed tracing integration
+ *   <li><strong>Unit Testing:</strong> Immutable objects are easy to test with predictable behavior
+ *       and clear contracts
+ *   <li><strong>Integration Testing:</strong> Standardized request/response patterns simplify
+ *       service integration testing
+ *   <li><strong>Error Testing:</strong> Comprehensive error handling framework supports thorough
+ *       error scenario testing
+ *   <li><strong>Validation Testing:</strong> Jakarta Bean Validation integration enables automated
+ *       validation testing
  * </ul>
  *
  * @author Rubens Gomes
- * @version 0.0.4
+ * @version 0.0.9-SNAPSHOT
  * @since 0.0.1
  * @see com.rubensgomes.msreqresplib.BaseRequest
  * @see com.rubensgomes.msreqresplib.BaseResponse
+ * @see com.rubensgomes.msreqresplib.Status
  * @see com.rubensgomes.msreqresplib.dto
  * @see com.rubensgomes.msreqresplib.error
  */

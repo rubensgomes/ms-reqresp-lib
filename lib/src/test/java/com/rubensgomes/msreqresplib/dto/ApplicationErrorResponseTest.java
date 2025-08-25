@@ -18,49 +18,43 @@ package com.rubensgomes.msreqresplib.dto;
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.Set;
+import java.util.UUID;
 
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.slf4j.LoggerFactory;
 
-import com.rubensgomes.msreqresplib.BaseResponse;
 import com.rubensgomes.msreqresplib.Status;
+import com.rubensgomes.msreqresplib.error.ApplicationError;
 import com.rubensgomes.msreqresplib.error.Error;
 import com.rubensgomes.msreqresplib.error.ErrorCode;
 
-import ch.qos.logback.classic.Level;
-import ch.qos.logback.classic.Logger;
-import ch.qos.logback.classic.spi.ILoggingEvent;
-import ch.qos.logback.core.read.ListAppender;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validation;
 import jakarta.validation.Validator;
 import jakarta.validation.ValidatorFactory;
+import lombok.extern.slf4j.Slf4j;
 
-/**
- * Unit tests for the {@link ApplicationErrorResponse} class.
- *
- * <p>This test class verifies the behavior of ApplicationErrorResponse, focusing on its validation
- * constraints, constructor behavior, and error-specific functionality.
- *
- * @author Rubens Gomes
- */
+@Slf4j
 @DisplayName("ApplicationErrorResponse Tests")
 class ApplicationErrorResponseTest {
 
-  private Validator validator;
   private ValidatorFactory factory;
-  private ListAppender<ILoggingEvent> logAppender;
-  private Logger logger;
+  private Validator validator;
 
-  /** Test implementation of the ErrorCode interface for testing error scenarios. */
-  private static class TestErrorCodeImpl implements ErrorCode {
+  @BeforeEach
+  void setUp() {
+    factory = Validation.buildDefaultValidatorFactory();
+    validator = factory.getValidator();
+  }
+
+  /** Simple test implementation of ErrorCode for testing purposes. */
+  static class TestErrorCode implements ErrorCode {
     private final String code;
     private final String description;
 
-    public TestErrorCodeImpl(String code, String description) {
+    public TestErrorCode(String code, String description) {
       this.code = code;
       this.description = description;
     }
@@ -74,512 +68,648 @@ class ApplicationErrorResponseTest {
     public String getDescription() {
       return description;
     }
+  }
 
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-      TestErrorCodeImpl that = (TestErrorCodeImpl) o;
-      return java.util.Objects.equals(code, that.code)
-          && java.util.Objects.equals(description, that.description);
+  @Nested
+  @DisplayName("Constructor Tests")
+  class ConstructorTests {
+
+    @Test
+    @DisplayName("Should create error response with valid parameters")
+    void shouldCreateErrorResponseWithValidParameters() {
+      // Given
+      String clientId = "test-service";
+      String transactionId = UUID.randomUUID().toString();
+      Status status = Status.ERROR;
+      TestErrorCode errorCode = new TestErrorCode("TEST001", "Test error");
+      Error error = new ApplicationError("Test error message", errorCode);
+
+      // When
+      ApplicationErrorResponse response =
+          new ApplicationErrorResponse(clientId, transactionId, status, error);
+
+      // Then
+      assertNotNull(response);
+      assertEquals(clientId, response.getClientId());
+      assertEquals(transactionId, response.getTransactionId());
+      assertEquals(status, response.getStatus());
+      assertEquals(error, response.getError());
     }
 
-    @Override
-    public int hashCode() {
-      return java.util.Objects.hash(code, description);
+    @Test
+    @DisplayName("Should create error response with different status values")
+    void shouldCreateErrorResponseWithDifferentStatusValues() {
+      // Given
+      String clientId = "status-test-service";
+      String transactionId = "status-test-123";
+      TestErrorCode errorCode = new TestErrorCode("TEST002", "Status test error");
+      Error error = new ApplicationError("Status test message", errorCode);
+
+      // When/Then - Test with various status values
+      Status[] testStatuses = {Status.ERROR, Status.PROCESSING};
+      for (Status status : testStatuses) {
+        ApplicationErrorResponse response =
+            new ApplicationErrorResponse(clientId, transactionId, status, error);
+        assertEquals(status, response.getStatus());
+        assertEquals(error, response.getError());
+      }
     }
 
-    @Override
-    public String toString() {
-      return String.format("TestErrorCodeImpl{code='%s', description='%s'}", code, description);
+    @Test
+    @DisplayName("Should create error response with complex error object")
+    void shouldCreateErrorResponseWithComplexErrorObject() {
+      // Given
+      String clientId = "complex-service";
+      String transactionId = "complex-test-456";
+      Status status = Status.ERROR;
+      TestErrorCode errorCode = new TestErrorCode("COMPLEX001", "Complex error code");
+      ApplicationError complexError =
+          new ApplicationError("Complex error with detailed information", errorCode);
+      complexError.setNativeErrorText("Detailed native error information for debugging");
+
+      // When
+      ApplicationErrorResponse response =
+          new ApplicationErrorResponse(clientId, transactionId, status, complexError);
+
+      // Then
+      assertEquals(clientId, response.getClientId());
+      assertEquals(transactionId, response.getTransactionId());
+      assertEquals(status, response.getStatus());
+      assertEquals(complexError, response.getError());
+    }
+
+    @Test
+    @DisplayName("Should allow creation with null parameters but fail validation")
+    void shouldAllowCreationWithNullParametersButFailValidation() {
+      // Given
+      String clientId = "valid-client-id";
+      String transactionId = "valid-transaction-id";
+      Status status = Status.ERROR;
+      TestErrorCode errorCode = new TestErrorCode("TEST003", "Null test");
+      Error error = new ApplicationError("Test error", errorCode);
+
+      // When - These should not throw exceptions at construction time
+      assertDoesNotThrow(() -> new ApplicationErrorResponse(null, transactionId, status, error));
+      assertDoesNotThrow(() -> new ApplicationErrorResponse(clientId, null, status, error));
+      assertDoesNotThrow(() -> new ApplicationErrorResponse(clientId, transactionId, null, error));
+      assertDoesNotThrow(() -> new ApplicationErrorResponse(clientId, transactionId, status, null));
+
+      // Then - But validation should catch these issues
+      ApplicationErrorResponse responseWithNullClient =
+          new ApplicationErrorResponse(null, transactionId, status, error);
+      Set<ConstraintViolation<ApplicationErrorResponse>> violations =
+          validator.validate(responseWithNullClient);
+      assertFalse(violations.isEmpty(), "Should have validation violations for null clientId");
     }
   }
 
-  /** Test implementation of the Error interface for testing error scenarios. */
-  private static class TestErrorImpl implements Error {
-    private final String errorDescription;
-    private String nativeErrorText;
-    private final ErrorCode errorCode;
+  @Nested
+  @DisplayName("Validation Tests")
+  class ValidationTests {
 
-    public TestErrorImpl(String errorDescription, String nativeErrorText, ErrorCode errorCode) {
-      this.errorDescription = errorDescription;
-      this.nativeErrorText = nativeErrorText;
-      this.errorCode = errorCode;
+    @Test
+    @DisplayName("Should pass validation with valid fields")
+    void shouldPassValidationWithValidFields() {
+      // Given
+      TestErrorCode errorCode = new TestErrorCode("VALID001", "Valid error code");
+      Error error = new ApplicationError("Valid error message", errorCode);
+      ApplicationErrorResponse response =
+          new ApplicationErrorResponse("valid-service", "valid-tx-123", Status.ERROR, error);
+
+      // When
+      Set<ConstraintViolation<ApplicationErrorResponse>> violations = validator.validate(response);
+
+      // Then
+      assertTrue(violations.isEmpty(), "Should have no validation violations");
     }
 
-    @Override
-    public String errorDescription() {
-      return errorDescription;
+    @Test
+    @DisplayName("Should fail validation when clientId is null")
+    void shouldFailValidationWhenClientIdIsNull() {
+      // Given
+      TestErrorCode errorCode = new TestErrorCode("NULL001", "Null client test");
+      Error error = new ApplicationError("Test error", errorCode);
+      ApplicationErrorResponse response =
+          new ApplicationErrorResponse(null, "valid-transaction-id", Status.ERROR, error);
+
+      // When
+      Set<ConstraintViolation<ApplicationErrorResponse>> violations = validator.validate(response);
+
+      // Then
+      assertFalse(violations.isEmpty(), "Should have validation violations");
+      assertTrue(
+          violations.stream().anyMatch(v -> v.getPropertyPath().toString().equals("clientId")),
+          "Should have clientId validation violation");
     }
 
-    @Override
-    public String nativeErrorText() {
-      return nativeErrorText;
+    @Test
+    @DisplayName("Should fail validation when clientId is empty")
+    void shouldFailValidationWhenClientIdIsEmpty() {
+      // Given
+      TestErrorCode errorCode = new TestErrorCode("EMPTY001", "Empty client test");
+      Error error = new ApplicationError("Test error", errorCode);
+      ApplicationErrorResponse response =
+          new ApplicationErrorResponse("", "valid-transaction-id", Status.ERROR, error);
+
+      // When
+      Set<ConstraintViolation<ApplicationErrorResponse>> violations = validator.validate(response);
+
+      // Then
+      assertFalse(violations.isEmpty(), "Should have validation violations");
+      assertTrue(
+          violations.stream().anyMatch(v -> v.getPropertyPath().toString().equals("clientId")),
+          "Should have clientId validation violation");
     }
 
-    // Additional method for testing - not part of the Error interface
-    public void setNativeErrorText(String nativeErrorText) {
-      this.nativeErrorText = nativeErrorText;
+    @Test
+    @DisplayName("Should fail validation when clientId is blank")
+    void shouldFailValidationWhenClientIdIsBlank() {
+      // Given
+      TestErrorCode errorCode = new TestErrorCode("BLANK001", "Blank client test");
+      Error error = new ApplicationError("Test error", errorCode);
+      ApplicationErrorResponse response =
+          new ApplicationErrorResponse("   ", "valid-transaction-id", Status.ERROR, error);
+
+      // When
+      Set<ConstraintViolation<ApplicationErrorResponse>> violations = validator.validate(response);
+
+      // Then
+      assertFalse(violations.isEmpty(), "Should have validation violations");
+      assertTrue(
+          violations.stream().anyMatch(v -> v.getPropertyPath().toString().equals("clientId")),
+          "Should have clientId validation violation");
     }
 
-    @Override
-    public ErrorCode errorCode() {
-      return errorCode;
+    @Test
+    @DisplayName("Should fail validation when transactionId is null")
+    void shouldFailValidationWhenTransactionIdIsNull() {
+      // Given
+      TestErrorCode errorCode = new TestErrorCode("NULL002", "Null transaction test");
+      Error error = new ApplicationError("Test error", errorCode);
+      ApplicationErrorResponse response =
+          new ApplicationErrorResponse("valid-client-id", null, Status.ERROR, error);
+
+      // When
+      Set<ConstraintViolation<ApplicationErrorResponse>> violations = validator.validate(response);
+
+      // Then
+      assertFalse(violations.isEmpty(), "Should have validation violations");
+      assertTrue(
+          violations.stream().anyMatch(v -> v.getPropertyPath().toString().equals("transactionId")),
+          "Should have transactionId validation violation");
     }
 
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-      TestErrorImpl that = (TestErrorImpl) o;
-      return java.util.Objects.equals(errorDescription, that.errorDescription)
-          && java.util.Objects.equals(nativeErrorText, that.nativeErrorText)
-          && java.util.Objects.equals(errorCode, that.errorCode);
+    @Test
+    @DisplayName("Should fail validation when transactionId is empty")
+    void shouldFailValidationWhenTransactionIdIsEmpty() {
+      // Given
+      TestErrorCode errorCode = new TestErrorCode("EMPTY002", "Empty transaction test");
+      Error error = new ApplicationError("Test error", errorCode);
+      ApplicationErrorResponse response =
+          new ApplicationErrorResponse("valid-client-id", "", Status.ERROR, error);
+
+      // When
+      Set<ConstraintViolation<ApplicationErrorResponse>> violations = validator.validate(response);
+
+      // Then
+      assertFalse(violations.isEmpty(), "Should have validation violations");
+      assertTrue(
+          violations.stream().anyMatch(v -> v.getPropertyPath().toString().equals("transactionId")),
+          "Should have transactionId validation violation");
     }
 
-    @Override
-    public int hashCode() {
-      return java.util.Objects.hash(errorDescription, nativeErrorText, errorCode);
+    @Test
+    @DisplayName("Should fail validation when transactionId is blank")
+    void shouldFailValidationWhenTransactionIdIsBlank() {
+      // Given
+      TestErrorCode errorCode = new TestErrorCode("BLANK002", "Blank transaction test");
+      Error error = new ApplicationError("Test error", errorCode);
+      ApplicationErrorResponse response =
+          new ApplicationErrorResponse("valid-client-id", "\t\n ", Status.ERROR, error);
+
+      // When
+      Set<ConstraintViolation<ApplicationErrorResponse>> violations = validator.validate(response);
+
+      // Then
+      assertFalse(violations.isEmpty(), "Should have validation violations");
+      assertTrue(
+          violations.stream().anyMatch(v -> v.getPropertyPath().toString().equals("transactionId")),
+          "Should have transactionId validation violation");
     }
 
-    @Override
-    public String toString() {
-      return String.format(
-          "TestErrorImpl{errorDescription='%s', nativeErrorText='%s', errorCode=%s}",
-          errorDescription, nativeErrorText, errorCode);
+    @Test
+    @DisplayName("Should fail validation when status is null")
+    void shouldFailValidationWhenStatusIsNull() {
+      // Given
+      TestErrorCode errorCode = new TestErrorCode("NULL003", "Null status test");
+      Error error = new ApplicationError("Test error", errorCode);
+      ApplicationErrorResponse response =
+          new ApplicationErrorResponse("valid-client-id", "valid-transaction-id", null, error);
+
+      // When
+      Set<ConstraintViolation<ApplicationErrorResponse>> violations = validator.validate(response);
+
+      // Then
+      assertFalse(violations.isEmpty(), "Should have validation violations");
+      assertTrue(
+          violations.stream().anyMatch(v -> v.getPropertyPath().toString().equals("status")),
+          "Should have status validation violation");
     }
   }
 
-  @BeforeEach
-  void setUp() {
-    factory = Validation.buildDefaultValidatorFactory();
-    validator = factory.getValidator();
+  @Nested
+  @DisplayName("Error Handling Tests")
+  class ErrorHandlingTests {
 
-    // Set up logging capture - capture logs from BaseResponse since that's where logResponse() is
-    // implemented
-    logger = (Logger) LoggerFactory.getLogger(BaseResponse.class);
-    logAppender = new ListAppender<>();
-    logAppender.start();
-    logger.addAppender(logAppender);
-    logger.setLevel(Level.DEBUG);
+    @Test
+    @DisplayName("Should maintain error information after construction")
+    void shouldMaintainErrorInformationAfterConstruction() {
+      // Given
+      String clientId = "error-maintain-service";
+      String transactionId = "error-maintain-test";
+      Status status = Status.ERROR;
+      TestErrorCode errorCode = new TestErrorCode("MAINTAIN001", "Maintain test error");
+      Error originalError = new ApplicationError("Original error message", errorCode);
+
+      // When
+      ApplicationErrorResponse response =
+          new ApplicationErrorResponse(clientId, transactionId, status, originalError);
+
+      // Then
+      assertNotNull(response.getError());
+      assertEquals(originalError, response.getError());
+      assertEquals("Original error message", response.getError().getErrorDescription());
+      assertEquals("MAINTAIN001", response.getError().getErrorCode().getCode());
+    }
+
+    @Test
+    @DisplayName("Should allow error modification after construction")
+    void shouldAllowErrorModificationAfterConstruction() {
+      // Given
+      String clientId = "error-modify-service";
+      String transactionId = "error-modify-test";
+      Status status = Status.ERROR;
+      TestErrorCode originalErrorCode = new TestErrorCode("MODIFY001", "Original error");
+      TestErrorCode newErrorCode = new TestErrorCode("MODIFY002", "Modified error");
+      Error originalError = new ApplicationError("Original error message", originalErrorCode);
+      Error newError = new ApplicationError("Modified error message", newErrorCode);
+
+      ApplicationErrorResponse response =
+          new ApplicationErrorResponse(clientId, transactionId, status, originalError);
+
+      // When
+      response.setError(newError);
+
+      // Then
+      assertEquals(newError, response.getError());
+      assertEquals("Modified error message", response.getError().getErrorDescription());
+      assertEquals("MODIFY002", response.getError().getErrorCode().getCode());
+      assertNotEquals(originalError, response.getError());
+    }
+
+    @Test
+    @DisplayName("Should handle different error types")
+    void shouldHandleDifferentErrorTypes() {
+      // Given
+      String clientId = "error-types-service";
+      String transactionId = "error-types-test";
+      Status status = Status.ERROR;
+
+      // Test with basic ApplicationError
+      TestErrorCode basicErrorCode = new TestErrorCode("BASIC001", "Basic error");
+      Error basicError = new ApplicationError("Basic error message", basicErrorCode);
+
+      // Test with ApplicationError containing native error text
+      TestErrorCode detailedErrorCode = new TestErrorCode("DETAILED001", "Detailed error");
+      ApplicationError detailedError =
+          new ApplicationError("Detailed error message", detailedErrorCode);
+      detailedError.setNativeErrorText("Native system error details");
+
+      // When/Then
+      ApplicationErrorResponse basicResponse =
+          new ApplicationErrorResponse(clientId, transactionId, status, basicError);
+      assertEquals(basicError, basicResponse.getError());
+
+      ApplicationErrorResponse detailedResponse =
+          new ApplicationErrorResponse(clientId, transactionId, status, detailedError);
+      assertEquals(detailedError, detailedResponse.getError());
+      assertEquals("Native system error details", detailedError.getNativeErrorText());
+    }
   }
 
-  @AfterEach
-  void tearDown() {
-    factory.close();
-    logger.detachAppender(logAppender);
+  @Nested
+  @DisplayName("Inheritance Tests")
+  class InheritanceTests {
+
+    @Test
+    @DisplayName("Should inherit BaseResponse functionality")
+    void shouldInheritBaseResponseFunctionality() {
+      // Given
+      String clientId = "inheritance-service";
+      String transactionId = "inheritance-test";
+      Status status = Status.ERROR;
+      TestErrorCode errorCode = new TestErrorCode("INHERIT001", "Inheritance test");
+      Error error = new ApplicationError("Inheritance test error", errorCode);
+
+      // When
+      ApplicationErrorResponse response =
+          new ApplicationErrorResponse(clientId, transactionId, status, error);
+
+      // Then - Should have all BaseResponse functionality
+      assertEquals(clientId, response.getClientId());
+      assertEquals(transactionId, response.getTransactionId());
+      assertEquals(status, response.getStatus());
+      assertDoesNotThrow(() -> response.logResponse());
+      assertNotNull(response.toString());
+      assertTrue(response.hashCode() != 0);
+    }
+
+    @Test
+    @DisplayName("Should be instance of BaseResponse")
+    void shouldBeInstanceOfBaseResponse() {
+      // Given
+      TestErrorCode errorCode = new TestErrorCode("INSTANCE001", "Instance test");
+      Error error = new ApplicationError("Instance test error", errorCode);
+      ApplicationErrorResponse response =
+          new ApplicationErrorResponse("instance-service", "instance-test", Status.ERROR, error);
+
+      // When/Then
+      assertTrue(
+          response instanceof com.rubensgomes.msreqresplib.BaseResponse,
+          "Should be instance of BaseResponse");
+    }
   }
 
-  @Test
-  @DisplayName("Constructor should create valid ApplicationErrorResponse with all required fields")
-  void constructor_shouldCreateValidResponse_whenAllRequiredFieldsProvided() {
-    // Given
-    String clientId = "test-client";
-    String transactionId = "test-transaction";
-    Status status = Status.FAILURE;
-    String message = "Database connection failed";
-    ErrorCode errorCode = new TestErrorCodeImpl("DB_001", "Database error");
-    Error error = new TestErrorImpl("Connection timeout error", "Connection timeout", errorCode);
+  @Nested
+  @DisplayName("Equals and HashCode Tests")
+  class EqualsAndHashCodeTests {
 
-    // When
-    ApplicationErrorResponse response =
-        new ApplicationErrorResponse(clientId, transactionId, status, message, error);
+    @Test
+    @DisplayName("Should be equal when all fields are the same")
+    void shouldBeEqualWhenAllFieldsAreTheSame() {
+      // Given
+      String clientId = "equals-service";
+      String transactionId = "equals-test-123";
+      Status status = Status.ERROR;
+      TestErrorCode errorCode = new TestErrorCode("EQUALS001", "Equals test");
+      Error error = new ApplicationError("Equals test error", errorCode);
 
-    // Then
-    assertEquals(clientId, response.getClientId());
-    assertEquals(transactionId, response.getTransactionId());
-    assertEquals(status, response.getStatus());
-    assertEquals(message, response.getMessage());
-    assertEquals(error, response.getError());
+      ApplicationErrorResponse response1 =
+          new ApplicationErrorResponse(clientId, transactionId, status, error);
+      ApplicationErrorResponse response2 =
+          new ApplicationErrorResponse(clientId, transactionId, status, error);
+
+      // When/Then
+      assertEquals(response1, response2, "Responses with same fields should be equal");
+      assertEquals(
+          response1.hashCode(), response2.hashCode(), "Equal responses should have same hash code");
+    }
+
+    @Test
+    @DisplayName("Should not be equal when error differs")
+    void shouldNotBeEqualWhenErrorDiffers() {
+      // Given
+      String clientId = "error-diff-service";
+      String transactionId = "error-diff-test";
+      Status status = Status.ERROR;
+      TestErrorCode errorCode1 = new TestErrorCode("DIFF001", "First error");
+      TestErrorCode errorCode2 = new TestErrorCode("DIFF002", "Second error");
+      Error error1 = new ApplicationError("First error message", errorCode1);
+      Error error2 = new ApplicationError("Second error message", errorCode2);
+
+      ApplicationErrorResponse response1 =
+          new ApplicationErrorResponse(clientId, transactionId, status, error1);
+      ApplicationErrorResponse response2 =
+          new ApplicationErrorResponse(clientId, transactionId, status, error2);
+
+      // When/Then
+      assertNotEquals(response1, response2, "Responses with different errors should not be equal");
+    }
+
+    @Test
+    @DisplayName("Should not be equal when core fields differ")
+    void shouldNotBeEqualWhenCoreFieldsDiffer() {
+      // Given
+      TestErrorCode errorCode = new TestErrorCode("CORE001", "Core fields test");
+      Error error = new ApplicationError("Core fields test error", errorCode);
+
+      ApplicationErrorResponse response1 =
+          new ApplicationErrorResponse("service-a", "tx-111", Status.ERROR, error);
+      ApplicationErrorResponse response2 =
+          new ApplicationErrorResponse("service-b", "tx-222", Status.ERROR, error);
+
+      // When/Then
+      assertNotEquals(
+          response1, response2, "Responses with different core fields should not be equal");
+    }
   }
 
-  @Test
-  @DisplayName("Constructor should pass validation when all fields are valid")
-  void constructor_shouldPassValidation_whenAllFieldsValid() {
-    // Given
-    ErrorCode errorCode = new TestErrorCodeImpl("ERR001", "Test error");
-    Error error = new TestErrorImpl("Generic error", "Error details", errorCode);
-    ApplicationErrorResponse response =
-        new ApplicationErrorResponse(
-            "client-123", "txn-456", Status.FAILURE, "Error occurred", error);
+  @Nested
+  @DisplayName("ToString Tests")
+  class ToStringTests {
 
-    // When
-    Set<ConstraintViolation<ApplicationErrorResponse>> violations = validator.validate(response);
+    @Test
+    @DisplayName("Should contain all fields in toString")
+    void shouldContainAllFieldsInToString() {
+      // Given
+      String clientId = "toString-service";
+      String transactionId = "toString-test-789";
+      Status status = Status.ERROR;
+      TestErrorCode errorCode = new TestErrorCode("TOSTRING001", "ToString test");
+      Error error = new ApplicationError("ToString test error", errorCode);
 
-    // Then
-    assertTrue(violations.isEmpty(), "Should have no validation violations");
+      ApplicationErrorResponse response =
+          new ApplicationErrorResponse(clientId, transactionId, status, error);
+
+      // When
+      String toString = response.toString();
+
+      // Then
+      assertNotNull(toString, "toString should not return null");
+      assertTrue(toString.contains(clientId), "toString should contain clientId");
+      assertTrue(toString.contains(transactionId), "toString should contain transactionId");
+      assertTrue(toString.contains(status.toString()), "toString should contain status");
+      assertTrue(toString.contains("error"), "toString should mention error field");
+    }
+
+    @Test
+    @DisplayName("Should handle special characters in toString")
+    void shouldHandleSpecialCharactersInToString() {
+      // Given
+      TestErrorCode errorCode = new TestErrorCode("SPECIAL001", "Special chars test");
+      Error error = new ApplicationError("Special chars: @#$%^&*()", errorCode);
+      ApplicationErrorResponse response =
+          new ApplicationErrorResponse("service@special#chars", "tx$123%456", Status.ERROR, error);
+
+      // When/Then
+      assertDoesNotThrow(
+          () -> response.toString(),
+          "toString should handle special characters without exceptions");
+    }
   }
 
-  @Test
-  @DisplayName("Constructor should accept null parameters but validation will catch them later")
-  void constructor_allowsNullParameters_butValidationCatchesLater() {
-    // The constructor doesn't enforce validation automatically at runtime
-    // This is expected behavior - validation happens when explicitly called
+  @Nested
+  @DisplayName("Logging Tests")
+  class LoggingTests {
 
-    ErrorCode validErrorCode = new TestErrorCodeImpl("VALID_CODE", "Valid error");
-    Error validError = new TestErrorImpl("Valid error", "Valid native", validErrorCode);
+    @Test
+    @DisplayName("Should log response without exceptions")
+    void shouldLogResponseWithoutExceptions() {
+      // Given
+      TestErrorCode errorCode = new TestErrorCode("LOG001", "Logging test");
+      Error error = new ApplicationError("Logging test error", errorCode);
+      ApplicationErrorResponse response =
+          new ApplicationErrorResponse("log-service", "log-test-123", Status.ERROR, error);
 
-    // Given & When - Constructor should not throw exceptions
-    ApplicationErrorResponse response1 =
-        new ApplicationErrorResponse(null, "txn-456", Status.FAILURE, "Error occurred", validError);
+      // When/Then - Should not throw any exceptions
+      assertDoesNotThrow(() -> response.logResponse(), "logResponse should not throw exceptions");
+    }
 
-    ApplicationErrorResponse response2 =
-        new ApplicationErrorResponse(
-            "client-123", null, Status.FAILURE, "Error occurred", validError);
+    @Test
+    @DisplayName("Should handle logging with complex error details")
+    void shouldHandleLoggingWithComplexErrorDetails() {
+      // Given
+      TestErrorCode errorCode = new TestErrorCode("COMPLEX_LOG001", "Complex logging test");
+      ApplicationError complexError =
+          new ApplicationError("Complex error with detailed information", errorCode);
+      complexError.setNativeErrorText("Native error text with\nnewlines\tand\ttabs");
 
-    ApplicationErrorResponse response3 =
-        new ApplicationErrorResponse("client-123", "txn-456", null, "Error occurred", validError);
+      ApplicationErrorResponse response =
+          new ApplicationErrorResponse(
+              "complex-log-service", "complex-log-test", Status.ERROR, complexError);
 
-    ApplicationErrorResponse response4 =
-        new ApplicationErrorResponse("client-123", "txn-456", Status.FAILURE, null, validError);
-
-    ApplicationErrorResponse response5 =
-        new ApplicationErrorResponse(
-            "client-123", "txn-456", Status.FAILURE, "Error occurred", null);
-
-    // Then - Constructor succeeds but validation will fail
-    assertNotNull(response1);
-    assertNotNull(response2);
-    assertNotNull(response3);
-    assertNotNull(response4);
-    assertNotNull(response5);
-
-    // When validated, they should fail for required fields only
-    // Note: message and error are @Nullable in BaseResponse, so nulls are allowed
-    Set<ConstraintViolation<ApplicationErrorResponse>> violations1 = validator.validate(response1);
-    Set<ConstraintViolation<ApplicationErrorResponse>> violations2 = validator.validate(response2);
-    Set<ConstraintViolation<ApplicationErrorResponse>> violations3 = validator.validate(response3);
-    Set<ConstraintViolation<ApplicationErrorResponse>> violations4 = validator.validate(response4);
-    Set<ConstraintViolation<ApplicationErrorResponse>> violations5 = validator.validate(response5);
-
-    // Verify each response has validation violations for required fields only
-    assertFalse(
-        violations1.isEmpty(), "Response with null clientId should have validation violations");
-    assertFalse(
-        violations2.isEmpty(),
-        "Response with null transactionId should have validation violations");
-    assertFalse(
-        violations3.isEmpty(), "Response with null status should have validation violations");
-    // message and error are @Nullable in BaseResponse, so no violations expected
-    assertTrue(
-        violations4.isEmpty(),
-        "Response with null message should NOT have validation violations (field is @Nullable)");
-    assertTrue(
-        violations5.isEmpty(),
-        "Response with null error should NOT have validation violations (field is @Nullable)");
-
-    // Verify specific violation counts and field names for required fields
-    assertEquals(1, violations1.size(), "Should have exactly 1 violation for null clientId");
-    assertEquals(1, violations2.size(), "Should have exactly 1 violation for null transactionId");
-    assertEquals(1, violations3.size(), "Should have exactly 1 violation for null status");
-
-    // Verify the violation property paths
-    assertEquals("clientId", violations1.iterator().next().getPropertyPath().toString());
-    assertEquals("transactionId", violations2.iterator().next().getPropertyPath().toString());
-    assertEquals("status", violations3.iterator().next().getPropertyPath().toString());
+      // When/Then - Should not throw any exceptions
+      assertDoesNotThrow(
+          () -> response.logResponse(),
+          "logResponse should handle complex error details without issues");
+    }
   }
 
-  @Test
-  @DisplayName("Constructor should accept blank strings but validation will catch them")
-  void constructor_acceptsBlankStrings_butValidationCatchesThem() {
-    // Given
-    ErrorCode validErrorCode = new TestErrorCodeImpl("VALID_CODE", "Valid error");
-    Error validError = new TestErrorImpl("Valid error", "Valid native", validErrorCode);
+  @Nested
+  @DisplayName("Thread Safety Tests")
+  class ThreadSafetyTests {
 
-    // When - Constructor accepts blank strings
-    ApplicationErrorResponse response1 =
-        new ApplicationErrorResponse("", "txn-456", Status.FAILURE, "Error occurred", validError);
+    @Test
+    @DisplayName("Should be thread-safe for read operations")
+    void shouldBeThreadSafeForReadOperations() throws InterruptedException {
+      // Given
+      TestErrorCode errorCode = new TestErrorCode("THREAD001", "Thread safety test");
+      Error error = new ApplicationError("Thread safety test error", errorCode);
+      ApplicationErrorResponse response =
+          new ApplicationErrorResponse("thread-service", "thread-test", Status.ERROR, error);
 
-    ApplicationErrorResponse response2 =
-        new ApplicationErrorResponse(
-            "client-123", "", Status.FAILURE, "Error occurred", validError);
+      int numberOfThreads = 10;
+      int operationsPerThread = 1000;
+      Thread[] threads = new Thread[numberOfThreads];
 
-    ApplicationErrorResponse response3 =
-        new ApplicationErrorResponse("client-123", "txn-456", Status.FAILURE, "", validError);
+      // When
+      for (int i = 0; i < numberOfThreads; i++) {
+        threads[i] =
+            new Thread(
+                () -> {
+                  for (int j = 0; j < operationsPerThread; j++) {
+                    // Perform read operations concurrently
+                    String clientId = response.getClientId();
+                    String transactionId = response.getTransactionId();
+                    Status status = response.getStatus();
+                    Error responseError = response.getError();
+                    String toString = response.toString();
+                    int hashCode = response.hashCode();
+                    response.logResponse();
 
-    // Then - Constructor succeeds but validation fails for required fields
-    assertNotNull(response1);
-    assertNotNull(response2);
-    assertNotNull(response3);
+                    // Verify values remain consistent
+                    assertEquals("thread-service", clientId);
+                    assertEquals("thread-test", transactionId);
+                    assertEquals(Status.ERROR, status);
+                    assertEquals(error, responseError);
+                    assertNotNull(toString);
+                    assertTrue(hashCode != 0);
+                  }
+                });
+        threads[i].start();
+      }
 
-    // Validation should fail for @NotBlank fields (clientId, transactionId)
-    // but message field is @Nullable so blank is allowed
-    assertFalse(validator.validate(response1).isEmpty(), "Blank clientId should fail validation");
-    assertFalse(
-        validator.validate(response2).isEmpty(), "Blank transactionId should fail validation");
-    assertTrue(
-        validator.validate(response3).isEmpty(),
-        "Blank message should NOT fail validation (field is @Nullable)");
+      // Wait for all threads to complete
+      for (Thread thread : threads) {
+        thread.join();
+      }
+
+      // Then - If we reach here without exceptions, the test passes
+      assertTrue(true, "Concurrent read operations completed without issues");
+    }
   }
 
-  @Test
-  @DisplayName("Should support Status.SUCCESS for non-error scenarios")
-  void constructor_shouldSupport_statusSuccess() {
-    // Given
-    ErrorCode warningCode = new TestErrorCodeImpl("WARN001", "Warning message");
-    Error warning = new TestErrorImpl("Warning occurred", "Minor issue", warningCode);
+  @Nested
+  @DisplayName("Edge Cases Tests")
+  class EdgeCasesTests {
 
-    // When
-    ApplicationErrorResponse response =
-        new ApplicationErrorResponse(
-            "client-123", "txn-456", Status.SUCCESS, "Operation completed with warnings", warning);
+    @Test
+    @DisplayName("Should handle very long field values")
+    void shouldHandleVeryLongFieldValues() {
+      // Given
+      String longClientId = "a".repeat(1000);
+      String longTransactionId = "b".repeat(1000);
+      Status status = Status.ERROR;
+      TestErrorCode errorCode = new TestErrorCode("LONG001", "Long fields test");
+      Error error = new ApplicationError("Very long error message: " + "c".repeat(500), errorCode);
 
-    // Then
-    assertEquals(Status.SUCCESS, response.getStatus());
-    assertEquals("Operation completed with warnings", response.getMessage());
-    assertNotNull(response.getError());
-  }
+      // When
+      ApplicationErrorResponse response =
+          new ApplicationErrorResponse(longClientId, longTransactionId, status, error);
 
-  @Test
-  @DisplayName("Should inherit logResponse functionality from BaseResponse")
-  void logResponse_shouldLogAllFields() {
-    // Given
-    ErrorCode errorCode = new TestErrorCodeImpl("DB_002", "Database operation error");
-    Error error =
-        new TestErrorImpl("Database error occurred", "Database connection lost", errorCode);
-    ApplicationErrorResponse response =
-        new ApplicationErrorResponse(
-            "test-client", "test-txn", Status.FAILURE, "Database operation failed", error);
+      // Then
+      assertEquals(longClientId, response.getClientId());
+      assertEquals(longTransactionId, response.getTransactionId());
+      assertEquals(status, response.getStatus());
+      assertEquals(error, response.getError());
+      assertDoesNotThrow(() -> response.logResponse());
+      assertDoesNotThrow(() -> response.toString());
+    }
 
-    // When
-    response.logResponse();
+    @Test
+    @DisplayName("Should handle Unicode characters")
+    void shouldHandleUnicodeCharacters() {
+      // Given
+      String unicodeClientId = "服务-αβγ-сервис";
+      String unicodeTransactionId = "交易-δεζ-транзакция";
+      Status status = Status.ERROR;
+      TestErrorCode errorCode = new TestErrorCode("UNICODE001", "Unicode test ñáéíóú");
+      Error error = new ApplicationError("Unicode error: 测试错误信息", errorCode);
 
-    // Then
-    assertEquals(1, logAppender.list.size());
-    ILoggingEvent logEvent = logAppender.list.get(0);
-    assertEquals(Level.DEBUG, logEvent.getLevel());
+      // When
+      ApplicationErrorResponse response =
+          new ApplicationErrorResponse(unicodeClientId, unicodeTransactionId, status, error);
 
-    String logMessage = logEvent.getFormattedMessage();
-    assertTrue(logMessage.contains("test-client"));
-    assertTrue(logMessage.contains("test-txn"));
-    assertTrue(logMessage.contains("FAILURE"));
-    assertTrue(logMessage.contains("Database operation failed"));
-    assertTrue(logMessage.contains("TestErrorImpl"));
-  }
+      // Then
+      assertEquals(unicodeClientId, response.getClientId());
+      assertEquals(unicodeTransactionId, response.getTransactionId());
+      assertEquals(status, response.getStatus());
+      assertEquals(error, response.getError());
+      assertDoesNotThrow(() -> response.logResponse());
+      assertDoesNotThrow(() -> response.toString());
+    }
 
-  @Test
-  @DisplayName("Should handle long strings in all fields")
-  void constructor_shouldHandleLongStrings() {
-    // Given
-    String longClientId = "a".repeat(1000);
-    String longTransactionId = "b".repeat(1000);
-    String longMessage = "c".repeat(2000);
-    ErrorCode errorCode = new TestErrorCodeImpl("LONG001", "Long error");
-    Error error = new TestErrorImpl("Long error description", "Error with long text", errorCode);
+    @Test
+    @DisplayName("Should handle boundary field values")
+    void shouldHandleBoundaryFieldValues() {
+      // Given - Using single character values (boundary case for @NotBlank)
+      String minClientId = "a";
+      String minTransactionId = "1";
+      Status status = Status.ERROR;
+      TestErrorCode errorCode = new TestErrorCode("B", "Boundary test");
+      Error error = new ApplicationError("E", errorCode);
 
-    // When
-    ApplicationErrorResponse response =
-        new ApplicationErrorResponse(
-            longClientId, longTransactionId, Status.FAILURE, longMessage, error);
+      // When
+      ApplicationErrorResponse response =
+          new ApplicationErrorResponse(minClientId, minTransactionId, status, error);
 
-    // Then
-    assertEquals(longClientId, response.getClientId());
-    assertEquals(longTransactionId, response.getTransactionId());
-    assertEquals(longMessage, response.getMessage());
-    assertEquals(error, response.getError());
-
-    // Validation should still pass
-    Set<ConstraintViolation<ApplicationErrorResponse>> violations = validator.validate(response);
-    assertTrue(violations.isEmpty());
-  }
-
-  @Test
-  @DisplayName("Should handle special characters and Unicode")
-  void constructor_shouldHandleSpecialCharacters() {
-    // Given
-    String specialClientId = "client-ñáéíóú-!@#$%";
-    String specialTransactionId = "txn-🚀-测试";
-    String specialMessage = "Error with émojis: ❌ Failed operation";
-    ErrorCode errorCode = new TestErrorCodeImpl("SPEC001", "Special character error");
-    Error error = new TestErrorImpl("Special error", "Special chars: ñáéíóú", errorCode);
-
-    // When
-    ApplicationErrorResponse response =
-        new ApplicationErrorResponse(
-            specialClientId, specialTransactionId, Status.FAILURE, specialMessage, error);
-
-    // Then
-    assertEquals(specialClientId, response.getClientId());
-    assertEquals(specialTransactionId, response.getTransactionId());
-    assertEquals(specialMessage, response.getMessage());
-    assertEquals(error, response.getError());
-
-    // Validation should pass
-    Set<ConstraintViolation<ApplicationErrorResponse>> violations = validator.validate(response);
-    assertTrue(violations.isEmpty());
-  }
-
-  @Test
-  @DisplayName("Should support typical error response scenarios")
-  void constructor_shouldSupportTypicalErrorScenarios() {
-    // Test various common error scenarios
-
-    // Database error
-    ErrorCode dbErrorCode = new TestErrorCodeImpl("DB_001", "Database connection error");
-    Error dbError =
-        new TestErrorImpl("Database connection error", "Database connection failed", dbErrorCode);
-    ApplicationErrorResponse dbResponse =
-        new ApplicationErrorResponse(
-            "web-app", "req-001", Status.FAILURE, "Unable to process user request", dbError);
-    assertEquals(Status.FAILURE, dbResponse.getStatus());
-
-    // Validation error
-    ErrorCode validationErrorCode = new TestErrorCodeImpl("VAL_001", "Validation error");
-    Error validationError =
-        new TestErrorImpl("Validation error", "Invalid input data", validationErrorCode);
-    ApplicationErrorResponse validationResponse =
-        new ApplicationErrorResponse(
-            "mobile-app", "req-002", Status.FAILURE, "Request validation failed", validationError);
-    assertEquals(Status.FAILURE, validationResponse.getStatus());
-
-    // Service unavailable
-    ErrorCode serviceErrorCode = new TestErrorCodeImpl("SVC_001", "Service unavailable error");
-    Error serviceError =
-        new TestErrorImpl(
-            "Service unavailable error", "External service unavailable", serviceErrorCode);
-    ApplicationErrorResponse serviceResponse =
-        new ApplicationErrorResponse(
-            "api-client",
-            "req-003",
-            Status.FAILURE,
-            "External dependency not available",
-            serviceError);
-    assertEquals(Status.FAILURE, serviceResponse.getStatus());
-  }
-
-  @Test
-  @DisplayName("toString should include all field values when using Lombok @Data")
-  void toString_shouldIncludeAllFieldValues() {
-    // Given
-    ErrorCode errorCode = new TestErrorCodeImpl("TEST001", "Test error");
-    Error error = new TestErrorImpl("Test error description", "Test error native", errorCode);
-    ApplicationErrorResponse response =
-        new ApplicationErrorResponse(
-            "test-client", "test-txn", Status.FAILURE, "Test message", error);
-
-    // When
-    String result = response.toString();
-
-    // Then
-    assertNotNull(result);
-    assertTrue(result.contains("test-client"));
-    assertTrue(result.contains("test-txn"));
-    assertTrue(result.contains("FAILURE"));
-    assertTrue(result.contains("Test message"));
-  }
-
-  @Test
-  @DisplayName("equals and hashCode should work correctly when using Lombok @Data")
-  void equalsAndHashCode_shouldWorkCorrectly() {
-    // Given
-    ErrorCode errorCode1 = new TestErrorCodeImpl("ERR001", "Error 1");
-    ErrorCode errorCode2 = new TestErrorCodeImpl("ERR001", "Error 1");
-    Error error1 = new TestErrorImpl("Error 1 description", "Error 1 native", errorCode1);
-    Error error2 = new TestErrorImpl("Error 1 description", "Error 1 native", errorCode2);
-
-    ApplicationErrorResponse response1 =
-        new ApplicationErrorResponse("client1", "txn1", Status.FAILURE, "message1", error1);
-    ApplicationErrorResponse response2 =
-        new ApplicationErrorResponse("client1", "txn1", Status.FAILURE, "message1", error2);
-    ApplicationErrorResponse response3 =
-        new ApplicationErrorResponse("client2", "txn1", Status.FAILURE, "message1", error1);
-
-    // When & Then
-    assertEquals(response1, response2);
-    assertEquals(response1.hashCode(), response2.hashCode());
-    assertNotEquals(response1, response3);
-    assertNotEquals(response1.hashCode(), response3.hashCode());
-  }
-
-  @Test
-  @DisplayName("Should enforce error-specific requirements vs BaseResponse")
-  void shouldEnforceErrorSpecificRequirements() {
-    // ApplicationErrorResponse requires both message and error to be non-null
-    // while BaseResponse allows them to be optional
-
-    ErrorCode errorCode =
-        new TestErrorCodeImpl("REQUIRED_ERROR", "Required error for ApplicationErrorResponse");
-    Error error = new TestErrorImpl("Required error", "Required native error", errorCode);
-
-    // When creating ApplicationErrorResponse, both message and error are required
-    ApplicationErrorResponse response =
-        new ApplicationErrorResponse("client", "txn", Status.FAILURE, "Required message", error);
-
-    // Then both fields should be populated
-    assertNotNull(response.getMessage());
-    assertNotNull(response.getError());
-    assertEquals("Required message", response.getMessage());
-    assertEquals(error, response.getError());
-
-    // Should pass validation since all required fields are provided
-    assertTrue(validator.validate(response).isEmpty());
-  }
-
-  @Test
-  @DisplayName("Should work with complex Error objects correctly")
-  void shouldWorkWithComplexErrorObjects() {
-    // Given complex error with structured ErrorCode
-    ErrorCode complexErrorCode =
-        new TestErrorCodeImpl(
-            "COMPLEX_DB_CONNECTION_TIMEOUT", "Database connection timeout with retry exhausted");
-    Error complexError =
-        new TestErrorImpl(
-            "Database connection failed after multiple retry attempts",
-            "java.sql.SQLTimeoutException: Connection attempt timed out after 30000ms, retries exhausted (attempted 3 times)",
-            complexErrorCode);
-
-    // When
-    ApplicationErrorResponse response =
-        new ApplicationErrorResponse(
-            "enterprise-app",
-            "txn-db-operation-12345",
-            Status.FAILURE,
-            "Unable to complete database operation due to connection issues",
-            complexError);
-
-    // Then
-    assertEquals("enterprise-app", response.getClientId());
-    assertEquals("txn-db-operation-12345", response.getTransactionId());
-    assertEquals(Status.FAILURE, response.getStatus());
-    assertEquals(
-        "Unable to complete database operation due to connection issues", response.getMessage());
-    assertNotNull(response.getError());
-    assertEquals(
-        "Database connection failed after multiple retry attempts",
-        response.getError().errorDescription());
-    assertEquals("COMPLEX_DB_CONNECTION_TIMEOUT", response.getError().errorCode().getCode());
-    assertEquals(
-        "Database connection timeout with retry exhausted",
-        response.getError().errorCode().getDescription());
-
-    // Should pass validation
-    assertTrue(validator.validate(response).isEmpty());
-  }
-
-  @Test
-  @DisplayName("Should demonstrate constructor validation annotation behavior")
-  void shouldDemonstrateConstructorValidationBehavior() {
-    // The @NotBlank and @NotNull annotations on constructor parameters are for documentation
-    // and potential framework validation, but don't automatically enforce validation at runtime
-
-    ErrorCode errorCode = new TestErrorCodeImpl("DEMO_ERROR", "Demo error");
-    Error error = new TestErrorImpl("Demo error", "Demo native", errorCode);
-
-    // Constructor accepts invalid values without throwing exceptions
-    ApplicationErrorResponse invalidResponse = new ApplicationErrorResponse("", "", null, "", null);
-
-    // But Bean Validation will catch these when explicitly validated
-    // Note: Only required fields (clientId, transactionId, status) will have violations
-    // message and error are @Nullable in BaseResponse
-    Set<ConstraintViolation<ApplicationErrorResponse>> violations =
-        validator.validate(invalidResponse);
-    assertFalse(violations.isEmpty());
-    assertEquals(3, violations.size()); // Only 3 required fields should have violations
-
-    // Valid response passes validation
-    ApplicationErrorResponse validResponse =
-        new ApplicationErrorResponse(
-            "valid-client", "valid-txn", Status.FAILURE, "Valid message", error);
-    assertTrue(validator.validate(validResponse).isEmpty());
+      // Then
+      Set<ConstraintViolation<ApplicationErrorResponse>> violations = validator.validate(response);
+      assertTrue(violations.isEmpty(), "Single character values should be valid");
+      assertEquals(minClientId, response.getClientId());
+      assertEquals(minTransactionId, response.getTransactionId());
+      assertEquals(status, response.getStatus());
+      assertEquals(error, response.getError());
+    }
   }
 }

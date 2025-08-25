@@ -27,21 +27,21 @@
  * <p>The DTO package focuses on specialized communication scenarios that require enhanced data
  * structures beyond the standard {@link com.rubensgomes.msreqresplib.BaseRequest} and {@link
  * com.rubensgomes.msreqresplib.BaseResponse} classes. Currently, this package specializes in
- * comprehensive error reporting and communication.
+ * comprehensive error reporting and communication through enhanced response structures.
  *
  * <p>Key design principles for DTOs in this package:
  *
  * <ul>
  *   <li><strong>Specialized Purpose:</strong> Each DTO is designed for specific communication
- *       scenarios with enhanced functionality
+ *       scenarios with enhanced functionality beyond base classes
  *   <li><strong>Enhanced Validation:</strong> Stricter validation constraints than base classes
- *       where appropriate
+ *       where appropriate to ensure data integrity
  *   <li><strong>Comprehensive Information:</strong> Rich data structures that provide complete
  *       context for their specific use cases
- *   <li><strong>Modern Java Support:</strong> Leverages modern Java features like records for
- *       immutable, efficient data structures
  *   <li><strong>Framework Integration:</strong> Seamless integration with validation frameworks,
  *       serialization libraries, and monitoring systems
+ *   <li><strong>Type Safety:</strong> Strong typing and validation prevent runtime errors and
+ *       provide excellent IDE support
  * </ul>
  *
  * <h2>Core Components</h2>
@@ -54,48 +54,25 @@
  *
  * <ul>
  *   <li><strong>Mandatory Error Information:</strong> Unlike the base response where error details
- *       are optional, this class requires both descriptive messages and structured error details
+ *       are optional, this class requires comprehensive error information at construction time
  *   <li><strong>Enhanced Validation:</strong> Stricter validation constraints ensure that error
  *       responses always contain sufficient information for client-side handling
  *   <li><strong>Structured Error Data:</strong> Integration with the {@link
  *       com.rubensgomes.msreqresplib.error} package for standardized error reporting
  *   <li><strong>Client Debugging Support:</strong> Rich error context to facilitate client-side
  *       debugging and error resolution
+ *   <li><strong>Guaranteed Error Presence:</strong> Constructor enforces that error information is
+ *       always provided, eliminating null error scenarios
  * </ul>
  *
  * <p>Key features:
  *
  * <ul>
- *   <li>Enforces presence of both error message and error details
+ *   <li>Enforces presence of both error message and error details at construction time
  *   <li>Maintains correlation tracking from base response functionality
  *   <li>Provides standardized error communication across all microservices
  *   <li>Supports both programmatic error handling and user-facing error messages
- * </ul>
- *
- * <h3>{@link com.rubensgomes.msreqresplib.dto.ApplicationError}</h3>
- *
- * <p>A modern Java record implementation of the {@link com.rubensgomes.msreqresplib.error.Error}
- * interface that provides a concrete data structure for representing application errors:
- *
- * <ul>
- *   <li><strong>Comprehensive Error Details:</strong> Encapsulates human-readable descriptions,
- *       standardized error codes, and optional native error text
- *   <li><strong>Record-Based Design:</strong> Leverages Java records for immutability, automatic
- *       equals/hashCode/toString, and clean syntax
- *   <li><strong>Validation Integration:</strong> Built-in validation constraints ensure data
- *       integrity with Jakarta validation annotations
- *   <li><strong>Flexible Error Context:</strong> Optional native error text supports detailed
- *       diagnostic information from underlying systems
- * </ul>
- *
- * <p>Design benefits:
- *
- * <ul>
- *   <li>Immutable record design for thread safety and performance
- *   <li>Automatic interface implementation through record component names
- *   <li>Integration with standardized error code framework
- *   <li>Support for multi-layered error reporting (application + native)
- *   <li>Compact syntax with comprehensive functionality
+ *   <li>Full compatibility with existing BaseResponse infrastructure
  * </ul>
  *
  * <h2>Design Patterns and Principles</h2>
@@ -107,26 +84,28 @@
  * <ul>
  *   <li><strong>Required Error Context:</strong> Error-specific DTOs mandate presence of error
  *       information where base classes make it optional
+ *   <li><strong>Constructor Validation:</strong> Critical parameters are validated at construction
+ *       time through Jakarta Bean Validation annotations
  *   <li><strong>Semantic Validation:</strong> Validation rules that ensure data makes sense in
  *       context (e.g., error responses must have error details)
- *   <li><strong>Cross-Field Validation:</strong> Validation that considers relationships between
- *       multiple fields
  *   <li><strong>Framework Integration:</strong> Leverages Jakarta Bean Validation for consistent
- *       validation behavior
+ *       validation behavior across the application
  * </ul>
  *
- * <h3>Modern Java Design</h3>
+ * <h3>Error Information Structure</h3>
  *
- * <p>The package leverages modern Java language features:
+ * <p>The package works in conjunction with the {@link com.rubensgomes.msreqresplib.error} package
+ * to provide comprehensive error reporting:
  *
  * <ul>
- *   <li><strong>Record-Based DTOs:</strong> Uses Java records for concise, immutable data
- *       structures
- *   <li><strong>Interface Integration:</strong> Records automatically implement interface methods
- *       through component name matching
- *   <li><strong>Annotation-Driven Validation:</strong> Uses Jakarta validation annotations on
- *       record components
- *   <li><strong>Type Safety:</strong> Strong typing and immutability prevent runtime errors
+ *   <li><strong>Error Interface Implementation:</strong> Uses {@link
+ *       com.rubensgomes.msreqresplib.error.Error} implementations for structured error data
+ *   <li><strong>ApplicationError Integration:</strong> Leverages {@link
+ *       com.rubensgomes.msreqresplib.error.ApplicationError} for comprehensive error details
+ *   <li><strong>ErrorCode Support:</strong> Supports standardized error codes through {@link
+ *       com.rubensgomes.msreqresplib.error.ErrorCode} implementations
+ *   <li><strong>Diagnostic Information:</strong> Includes support for native error text and
+ *       diagnostic information for debugging purposes
  * </ul>
  *
  * <h3>Specialization Over Generalization</h3>
@@ -136,19 +115,30 @@
  *
  * <ul>
  *   <li><strong>Purpose-Built Classes:</strong> Each DTO is optimized for its specific use case
+ *       with appropriate validation and field requirements
  *   <li><strong>Clear Contracts:</strong> Validation and field requirements are explicit and
- *       enforced
- *   <li><strong>Type Safety:</strong> Strong typing prevents misuse and provides IDE support
+ *       enforced at compile time and runtime
+ *   <li><strong>Type Safety:</strong> Strong typing prevents misuse and provides comprehensive IDE
+ *       support with auto-completion
  *   <li><strong>Self-Documenting:</strong> Class names and structure clearly indicate intended use
+ *       and constraints
  * </ul>
  *
  * <h2>Usage Examples</h2>
  *
- * <h3>Creating Application Errors with Records</h3>
+ * <h3>Creating Comprehensive Error Responses</h3>
  *
  * <pre>{@code
- * // Modern Java record usage - creating detailed error
- * public record CustomErrorCode(String code, String description) implements ErrorCode {
+ * // Create error code implementation
+ * public class DatabaseErrorCode implements ErrorCode {
+ *     private final String code;
+ *     private final String description;
+ *
+ *     public DatabaseErrorCode(String code, String description) {
+ *         this.code = code;
+ *         this.description = description;
+ *     }
+ *
  *     @Override
  *     public String getCode() { return code; }
  *
@@ -156,175 +146,189 @@
  *     public String getDescription() { return description; }
  * }
  *
- * // Create error with record syntax
- * var errorCode = new CustomErrorCode("SYSGN001", "Database connection failed");
- * var error = new ApplicationError(
+ * // Create error using ApplicationError from the error package
+ * ErrorCode errorCode = new DatabaseErrorCode("DB001", "Database connection failed");
+ * ApplicationError error = new ApplicationError(
  *     "Unable to connect to database",
- *     errorCode,
- *     "Connection timeout after 30 seconds to database server"
+ *     errorCode
  * );
  *
- * // Access error information using record methods
- * String description = error.errorDescription();  // "Unable to connect to database"
- * String code = error.errorCode().getCode();      // "SYSGN001"
- * String nativeText = error.nativeErrorText();    // "Connection timeout..."
- * }</pre>
+ * // Add diagnostic information if needed
+ * error.setNativeErrorText("Connection timeout after 30 seconds to database server");
  *
- * <h3>Creating Comprehensive Error Responses</h3>
- *
- * <pre>{@code
- * // Create error response using ApplicationError record
- * var errorCode = new CustomErrorCode("VALGN001", "Required field is missing");
- * var error = new ApplicationError(
- *     "Username is required",
- *     errorCode,
- *     "Field validation failed: username cannot be null or empty"
- * );
- *
- * var response = new ApplicationErrorResponse(
+ * // Create guaranteed error response
+ * ApplicationErrorResponse response = new ApplicationErrorResponse(
  *     "order-service",
  *     "txn-12345",
  *     Status.ERROR,
- *     "Unable to process order due to validation errors",
  *     error
  * );
+ *
+ * // Access error information
+ * String description = response.getError().getErrorDescription();  // "Unable to connect to database"
+ * String code = response.getError().getErrorCode().getCode();      // "DB001"
+ * String nativeText = response.getError().getNativeErrorText();    // "Connection timeout..."
+ * }</pre>
+ *
+ * <h3>Validation Error Handling</h3>
+ *
+ * <pre>{@code
+ * // Create validation error
+ * ErrorCode validationCode = new ValidationErrorCode("VAL001", "Required field is missing");
+ * ApplicationError error = new ApplicationError(
+ *     "Username is required",
+ *     validationCode
+ * );
+ * error.setNativeErrorText("Field validation failed: username cannot be null or empty");
+ *
+ * // Create error response with guaranteed error information
+ * ApplicationErrorResponse response = new ApplicationErrorResponse(
+ *     "user-service",
+ *     "req-67890",
+ *     Status.ERROR,
+ *     error
+ * );
+ *
+ * // Response automatically includes all error details
+ * Error responseError = response.getError();
+ * String clientMessage = responseError.getErrorDescription();  // For user display
+ * String errorCode = responseError.getErrorCode().getCode();   // For programmatic handling
+ * String diagnostic = responseError.getNativeErrorText();     // For debugging
  * }</pre>
  *
  * <h3>Controller Integration with Enhanced Error Handling</h3>
  *
  * <pre>{@code
- * @PostMapping("/orders")
- * public ResponseEntity<?> createOrder(@Valid @RequestBody OrderCreateRequest request) {
- *     try {
- *         // Process order logic
- *         return ResponseEntity.ok(processOrder(request));
+ * @RestController
+ * @RequestMapping("/api/orders")
+ * public class OrderController {
  *
- *     } catch (ValidationException e) {
- *         var errorCode = new CustomErrorCode("VALGN001", "Validation failed");
- *         var error = new ApplicationError(
- *             e.getMessage(),
- *             errorCode,
- *             e.getFieldErrors().toString()
- *         );
+ *     @PostMapping
+ *     public ResponseEntity<?> createOrder(@Valid @RequestBody OrderCreateRequest request) {
+ *         try {
+ *             // Process order logic
+ *             OrderCreateResponse successResponse = orderService.createOrder(request);
+ *             return ResponseEntity.ok(successResponse);
  *
- *         var errorResponse = new ApplicationErrorResponse(
- *             request.getClientId(),
- *             request.getTransactionId(),
- *             Status.ERROR,
- *             "Order validation failed",
- *             error
- *         );
+ *         } catch (ValidationException e) {
+ *             // Create detailed validation error
+ *             ErrorCode validationCode = ApplicationErrorCodes.VALIDATION_FAILED;
+ *             ApplicationError error = new ApplicationError(
+ *                 "Order validation failed",
+ *                 validationCode
+ *             );
+ *             error.setNativeErrorText(e.getMessage());
  *
- *         return ResponseEntity.badRequest().body(errorResponse);
+ *             ApplicationErrorResponse errorResponse = new ApplicationErrorResponse(
+ *                 request.getClientId(),
+ *                 request.getTransactionId(),
+ *                 Status.ERROR,
+ *                 error
+ *             );
  *
- *     } catch (DatabaseException e) {
- *         var errorCode = new CustomErrorCode("SYSGN001", "Database operation failed");
- *         var error = new ApplicationError(
- *             "Database operation failed",
- *             errorCode,
- *             e.getCause().getMessage()
- *         );
+ *             return ResponseEntity.badRequest().body(errorResponse);
  *
- *         var errorResponse = new ApplicationErrorResponse(
- *             request.getClientId(),
- *             request.getTransactionId(),
- *             Status.ERROR,
- *             "Unable to save order",
- *             error
- *         );
+ *         } catch (DatabaseException e) {
+ *             // Create system error with diagnostic information
+ *             ErrorCode dbCode = ApplicationErrorCodes.DATABASE_ERROR;
+ *             ApplicationError error = new ApplicationError(
+ *                 "Order processing temporarily unavailable",
+ *                 dbCode
+ *             );
  *
- *         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
- *             .body(errorResponse);
+ *             // Add diagnostic information if available
+ *             if (e.getDiagnosticInfo() != null) {
+ *                 error.setNativeErrorText(e.getDiagnosticInfo());
+ *             }
+ *
+ *             ApplicationErrorResponse errorResponse = new ApplicationErrorResponse(
+ *                 request.getClientId(),
+ *                 request.getTransactionId(),
+ *                 Status.ERROR,
+ *                 error
+ *             );
+ *
+ *             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+ *         }
  *     }
- * }
- * }</pre>
- *
- * <h3>Error Response Serialization</h3>
- *
- * <pre>{@code
- * // JSON serialization example
- * {
- *   "clientId": "order-service",
- *   "transactionId": "txn-12345",
- *   "status": "ERROR",
- *   "timestamp": "2025-08-24T10:30:00Z",
- *   "message": "Unable to process order due to validation errors",
- *   "error": {
- *     "errorDescription": "Username is required",
- *     "errorCode": {
- *       "code": "VALGN001",
- *       "description": "Required field is missing"
- *     },
- *     "nativeErrorText": "Field validation failed: username cannot be null or empty"
- *   }
  * }
  * }</pre>
  *
  * <h2>Integration Guidelines</h2>
  *
- * <p>To effectively integrate these specialized DTOs into your microservices:
+ * <h3>Error Response Strategy</h3>
  *
- * <ol>
- *   <li><strong>Use Appropriate Specializations:</strong> Choose {@link
- *       com.rubensgomes.msreqresplib.dto.ApplicationErrorResponse} for error scenarios where
- *       comprehensive error information is required
- *   <li><strong>Implement Comprehensive Error Handling:</strong> Leverage {@link
- *       com.rubensgomes.msreqresplib.dto.ApplicationError} to provide both application-level and
- *       native system error details
- *   <li><strong>Leverage Record Benefits:</strong> Take advantage of record immutability, automatic
- *       methods, and concise syntax
- *   <li><strong>Maintain Validation Standards:</strong> Ensure all required fields are populated
- *       and validation constraints are met
- *   <li><strong>Consistent Error Communication:</strong> Standardize error response formats across
- *       all microservices using these DTOs
- *   <li><strong>Monitor Error Patterns:</strong> Use the structured error data for monitoring and
- *       alerting on error patterns and trends
- * </ol>
- *
- * <h2>Extension Guidelines</h2>
- *
- * <p>When adding new specialized DTOs to this package:
+ * <p>When implementing error handling in microservices, follow these guidelines:
  *
  * <ul>
- *   <li><strong>Follow Naming Conventions:</strong> Use descriptive names that clearly indicate the
- *       DTO's purpose and specialization
- *   <li><strong>Consider Record Design:</strong> Use Java records for immutable DTOs when
- *       appropriate
- *   <li><strong>Extend Base Classes:</strong> Build upon {@link
- *       com.rubensgomes.msreqresplib.BaseRequest} or {@link
- *       com.rubensgomes.msreqresplib.BaseResponse} when appropriate
- *   <li><strong>Implement Enhanced Validation:</strong> Add validation constraints that make sense
- *       for the specific use case
- *   <li><strong>Document Purpose:</strong> Clearly document what scenarios the DTO is designed for
- *       and how it differs from base classes
- *   <li><strong>Maintain Consistency:</strong> Follow the same patterns established by existing
- *       DTOs in this package
+ *   <li><strong>Consistent Error Structure:</strong> Always use ApplicationErrorResponse for error
+ *       scenarios to ensure consistent client experience across all services
+ *   <li><strong>Appropriate Error Details:</strong> Include sufficient detail for client-side error
+ *       handling without exposing sensitive system information
+ *   <li><strong>Transaction Correlation:</strong> Preserve transaction IDs across service
+ *       boundaries for end-to-end tracing and debugging
+ *   <li><strong>Status Code Mapping:</strong> Map error types to appropriate HTTP status codes for
+ *       REST APIs (400 for validation, 500 for system errors, etc.)
+ *   <li><strong>Error Code Consistency:</strong> Use standardized error codes across services for
+ *       programmatic error handling by clients
  * </ul>
  *
- * <h2>Performance Considerations</h2>
+ * <h3>Validation Best Practices</h3>
+ *
+ * <p>Leverage the enhanced validation capabilities effectively:
  *
  * <ul>
- *   <li><strong>Record Efficiency:</strong> Java records provide optimal memory layout and
- *       performance for immutable data
- *   <li><strong>Validation Caching:</strong> Validation results can be cached due to immutable
- *       nature
- *   <li><strong>Serialization Optimization:</strong> DTOs are optimized for JSON
- *       serialization/deserialization performance
- *   <li><strong>Memory Efficiency:</strong> Structured error data prevents string concatenation and
- *       improves memory usage patterns
- *   <li><strong>Thread Safety:</strong> Immutable design eliminates synchronization overhead
+ *   <li><strong>Early Validation:</strong> Validate inputs at service boundaries using Jakarta
+ *       validation annotations on request DTOs
+ *   <li><strong>Meaningful Error Messages:</strong> Provide clear, actionable error descriptions
+ *       for client developers and end users
+ *   <li><strong>Structured Error Codes:</strong> Use consistent error code schemes across services
+ *       for programmatic handling and monitoring
+ *   <li><strong>Diagnostic Information:</strong> Include native error text for debugging while
+ *       keeping user-facing messages clean and actionable
+ *   <li><strong>Constructor Validation:</strong> Rely on constructor validation to ensure error
+ *       responses are always properly formed
+ * </ul>
+ *
+ * <h3>Framework Integration</h3>
+ *
+ * <p>These DTOs integrate seamlessly with common frameworks and libraries:
+ *
+ * <ul>
+ *   <li><strong>Spring Boot:</strong> Works with Spring's validation, serialization, and error
+ *       handling mechanisms out of the box
+ *   <li><strong>Jackson:</strong> Fully compatible with JSON serialization for REST APIs with
+ *       proper field naming and structure
+ *   <li><strong>Jakarta Validation:</strong> Integrates with validation frameworks for automatic
+ *       constraint checking and error reporting
+ *   <li><strong>Monitoring Systems:</strong> Structured error information facilitates integration
+ *       with monitoring and alerting systems
+ *   <li><strong>Testing Frameworks:</strong> Clear structure and validation make unit testing and
+ *       integration testing straightforward
+ * </ul>
+ *
+ * <h2>Thread Safety Considerations</h2>
+ *
+ * <p>DTOs in this package follow consistent thread safety patterns:
+ *
+ * <ul>
+ *   <li><strong>Immutable Core Fields:</strong> Critical fields are final and set during
+ *       construction
+ *   <li><strong>Safe Read Operations:</strong> Read operations on immutable fields are thread-safe
+ *   <li><strong>Controlled Mutability:</strong> Where mutability is allowed (e.g., native error
+ *       text), it's clearly documented and isolated
+ *   <li><strong>Defensive Design:</strong> DTOs are designed to be safely shared across threads for
+ *       read operations
  * </ul>
  *
  * @author Rubens Gomes
- * @version 0.0.7
  * @since 0.0.2
  * @see com.rubensgomes.msreqresplib.BaseRequest
  * @see com.rubensgomes.msreqresplib.BaseResponse
  * @see com.rubensgomes.msreqresplib.error
- * @see com.rubensgomes.msreqresplib.dto.ApplicationErrorResponse
- * @see com.rubensgomes.msreqresplib.dto.ApplicationError
- * @see jakarta.validation.constraints.NotBlank
- * @see jakarta.validation.constraints.NotNull
- * @see jakarta.annotation.Nullable
+ * @see com.rubensgomes.msreqresplib.error.ApplicationError
+ * @see com.rubensgomes.msreqresplib.error.Error
+ * @see com.rubensgomes.msreqresplib.error.ErrorCode
+ * @see jakarta.validation.constraints
  */
 package com.rubensgomes.msreqresplib.dto;
