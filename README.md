@@ -6,10 +6,11 @@ Base request and response types to be used by microservices.
 ```shell
 ./gradlew -q javaToolchains
 ```
+
 ### Update the gradlew wrapper version
 
 ```shell
-./gradlew wrapper --gradle-version=9.0.0 --distribution-type=bin
+./gradlew wrapper --gradle-version=9.1.0 --distribution-type=bin
 ```
 
 ## Clean, Build, Test, Assemble, Publish, Release
