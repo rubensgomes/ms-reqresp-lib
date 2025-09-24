@@ -46,11 +46,6 @@ val developerId: String by project
 val developerName: String by project
 val scmConnection: String by project
 val scmUrl: String by project
-val repsyUrl: String by project
-// REPSY_USERNAME must be defined as an environment variable
-// REPSY_PASSWORD must be defined as an environment variable
-val repsyUsername: String? = System.getenv("REPSY_USERNAME")
-val repsyPassword: String? = System.getenv("REPSY_PASSWORD")
 
 project.group = group
 project.version = version
@@ -60,7 +55,6 @@ project.description = description
 
 repositories {
     mavenCentral()
-    maven { url = uri("https://repo.repsy.io/mvn/rubensgomes/default/") }
 }
 
 // --------------- >>> dependencies <<< ---------------------------------------
@@ -225,11 +219,15 @@ publishing {
     }
 
     repositories {
+        val msReqrespLibMavenRepoUrl: String by project
+
         maven {
-            url = uri(repsyUrl)
+            name = "GitHubPackages"
+            project.version = version
+            url = uri(msReqrespLibMavenRepoUrl)
             credentials {
-                username = repsyUsername
-                password = repsyPassword
+                username = System.getenv("MAVEN_REPO_USERNAME")
+                password = System.getenv("MAVEN_REPO_PASSWORD")
             }
         }
     }
