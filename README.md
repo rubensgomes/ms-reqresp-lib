@@ -6,6 +6,7 @@ Base request and response types to be used by microservices.
 ```shell
 ./gradlew -q javaToolchains
 ```
+
 ### Update the gradlew wrapper version
 
 ```shell
