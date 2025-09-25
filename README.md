@@ -9,48 +9,48 @@ Base request and response types to be used by microservices.
 
 ### Update the gradlew wrapper version
 
-```shell
+```bash
 ./gradlew wrapper --gradle-version=9.1.0 --distribution-type=bin
 ```
 
 ## Clean, Build, Test, Assemble, Publish, Release
 
-```shell
+```bash
 ./gradlew --info clean
 ```
 
-```shell
+```bash
 ./gradlew :lib:spotlessApply
 ```
 
-```shell
+```bash
 ./gradlew --info clean build
 ```
 
-```shell
+```bash
 # --info is required for Grdle to display logs from tests
 ./gradlew --info clean test
 ```
 
-```shell
+```bash
 ./gradlew --info jar
 ```
 
-```shell
+```bash
 ./gradlew --info assemble
 ```
 
-```shell
+```bash
 git commit -m "fixes and refactorings" -a
 git push
 ```
 
-```shell
+```bash
 # only Rubens can release
 ./gradlew --info release
 ```
 
-```shell
+```bash
 git checkout release
 git pull
 ./gradlew --info publish
