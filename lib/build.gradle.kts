@@ -30,6 +30,8 @@ dependencies {
     implementation(libs.jakarta.annotation.api)
     implementation(libs.jakarta.validation.api)
     implementation(libs.slf4j.api)
+    implementation(libs.ms.base.lib)
+    testImplementation("org.mockito:mockito-core:5.20.0")
 
     // Test
     testImplementation(libs.junit.jupiter.params)
