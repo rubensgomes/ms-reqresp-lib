@@ -46,7 +46,7 @@
  *
  * <h2>Core Components</h2>
  *
- * <h3>{@link com.rubensgomes.msreqresplib.dto.ApplicationErrorResponse}</h3>
+ * <h3>{@link com.rubensgomes.msbaselib.error.ApplicationError}</h3>
  *
  * <p>A specialized response DTO designed specifically for error communication scenarios. This class
  * extends {@link com.rubensgomes.msreqresplib.BaseResponse} with enhanced requirements for error
@@ -58,7 +58,7 @@
  *   <li><strong>Enhanced Validation:</strong> Stricter validation constraints ensure that error
  *       responses always contain sufficient information for client-side handling
  *   <li><strong>Structured Error Data:</strong> Integration with the {@link
- *       com.rubensgomes.msreqresplib.error} package for standardized error reporting
+ *       com.rubensgomes.msbaselib.error} package for standardized error reporting
  *   <li><strong>Client Debugging Support:</strong> Rich error context to facilitate client-side
  *       debugging and error resolution
  *   <li><strong>Guaranteed Error Presence:</strong> Constructor enforces that error information is
@@ -94,16 +94,16 @@
  *
  * <h3>Error Information Structure</h3>
  *
- * <p>The package works in conjunction with the {@link com.rubensgomes.msreqresplib.error} package
- * to provide comprehensive error reporting:
+ * <p>The package works in conjunction with the {@link com.rubensgomes.msbaselib.error} package to
+ * provide comprehensive error reporting:
  *
  * <ul>
  *   <li><strong>Error Interface Implementation:</strong> Uses {@link
- *       com.rubensgomes.msreqresplib.error.Error} implementations for structured error data
+ *       com.rubensgomes.msbaselib.error.ApplicationError} for structured error data
  *   <li><strong>ApplicationError Integration:</strong> Leverages {@link
- *       com.rubensgomes.msreqresplib.error.ApplicationError} for comprehensive error details
+ *       com.rubensgomes.msbaselib.error.ApplicationError} for comprehensive error details
  *   <li><strong>ErrorCode Support:</strong> Supports standardized error codes through {@link
- *       com.rubensgomes.msreqresplib.error.ErrorCode} implementations
+ *       com.rubensgomes.msbaselib.error.ApplicationErrorCode} implementations
  *   <li><strong>Diagnostic Information:</strong> Includes support for native error text and
  *       diagnostic information for debugging purposes
  * </ul>
@@ -322,13 +322,12 @@
  * </ul>
  *
  * @author Rubens Gomes
- * @since 0.0.2
  * @see com.rubensgomes.msreqresplib.BaseRequest
  * @see com.rubensgomes.msreqresplib.BaseResponse
- * @see com.rubensgomes.msreqresplib.error
- * @see com.rubensgomes.msreqresplib.error.ApplicationError
- * @see com.rubensgomes.msreqresplib.error.Error
- * @see com.rubensgomes.msreqresplib.error.ErrorCode
+ * @see com.rubensgomes.msbaselib.Status
+ * @see com.rubensgomes.msbaselib.error.ApplicationError
+ * @see com.rubensgomes.msbaselib.error.ApplicationErrorCode
  * @see jakarta.validation.constraints
+ * @since 0.0.2
  */
 package com.rubensgomes.msreqresplib.dto;

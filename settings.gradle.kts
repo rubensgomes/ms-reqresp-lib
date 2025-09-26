@@ -57,17 +57,19 @@ dependencyResolutionManagement {
     }
 
     // Fetch GitHub repo URLs directly from settings.extra.properties
+    val msBaseLibMavenRepoUrl = settings.extra.properties["msBaseLibMavenRepoUrl"] as? String
     val versionCatalogMavenRepoUrl = settings.extra.properties["versionCatalogMavenRepoUrl"] as? String
 
     repositories {
         mavenCentral()
         google()
+        githubRepo(msBaseLibMavenRepoUrl)
         githubRepo(versionCatalogMavenRepoUrl)
     }
 
     versionCatalogs {
         create("libs") {
-            from("com.rubensgomes:gradle-catalog:0.0.13")
+            from("com.rubensgomes:gradle-catalog:0.0.14")
         }
     }
 }

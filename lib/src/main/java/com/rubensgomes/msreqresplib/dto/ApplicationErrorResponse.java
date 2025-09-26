@@ -15,9 +15,9 @@
  */
 package com.rubensgomes.msreqresplib.dto;
 
+import com.rubensgomes.msbaselib.Status;
+import com.rubensgomes.msbaselib.error.ApplicationError;
 import com.rubensgomes.msreqresplib.BaseResponse;
-import com.rubensgomes.msreqresplib.Status;
-import com.rubensgomes.msreqresplib.error.Error;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -60,7 +60,7 @@ import jakarta.validation.constraints.NotNull;
  * <pre>{@code
  * // Basic error response creation
  * ErrorCode validationCode = ApplicationErrorCodes.VALIDATION_FAILED;
- * Error validationError = new ApplicationError(
+ * ApplicationError validationError = new com.rubensgomes.msbaselib.error.ApplicationError(
  *     "Input validation failed",
  *     validationCode,
  *     "Field 'username' is required but was null"
@@ -75,7 +75,7 @@ import jakarta.validation.constraints.NotNull;
  *
  * // Database connection error with diagnostic information
  * ErrorCode dbCode = ApplicationErrorCodes.DATABASE_CONNECTION_FAILED;
- * Error dbError = new ApplicationError(
+ * ApplicationError dbError = new com.rubensgomes.msbaselib.error.ApplicationError(
  *     "Database operation failed",
  *     dbCode,
  *     "Connection pool exhausted: 0/10 connections available"
@@ -126,8 +126,8 @@ import jakarta.validation.constraints.NotNull;
  * @since 0.0.2
  * @see BaseResponse
  * @see Error
- * @see Status
- * @see com.rubensgomes.msreqresplib.error.ErrorCode
+ * @see com.rubensgomes.msbaselib.Status
+ * @see com.rubensgomes.msbaselib.error.ApplicationError
  * @see jakarta.validation.constraints.NotBlank
  * @see jakarta.validation.constraints.NotNull
  */
@@ -154,8 +154,8 @@ public class ApplicationErrorResponse extends BaseResponse {
    * <ul>
    *   <li><strong>clientId</strong> - Should uniquely identify the originating client or service
    *   <li><strong>transactionId</strong> - Should be a unique correlation ID for request tracing
-   *   <li><strong>status</strong> - Typically {@link Status#ERROR} but can be other error-related
-   *       statuses
+   *   <li><strong>status</strong> - Typically {@link com.rubensgomes.msbaselib.Status#ERROR} but
+   *       can be other error-related statuses
    *   <li><strong>error</strong> - Must contain comprehensive error details for proper client
    *       handling
    * </ul>
@@ -174,7 +174,7 @@ public class ApplicationErrorResponse extends BaseResponse {
    * <pre>{@code
    * // Create detailed error information
    * ErrorCode authCode = ApplicationErrorCodes.AUTHENTICATION_FAILED;
-   * Error authError = new ApplicationError(
+   * ApplicationError authError = new com.rubensgomes.msbaselib.error.ApplicationError(
    *     "Authentication failed for user",
    *     authCode,
    *     "JWT token expired at 2025-08-24T10:30:00Z"
@@ -196,8 +196,8 @@ public class ApplicationErrorResponse extends BaseResponse {
    *     multiple systems and service boundaries. Essential for distributed tracing and debugging.
    *     Must not be null, empty, or contain only whitespace characters.
    * @param status the overall processing outcome for this response. While typically {@link
-   *     Status#ERROR} for error responses, other error-related statuses may be appropriate
-   *     depending on the specific error scenario. Must not be null.
+   *     com.rubensgomes.msbaselib.Status#ERROR} for error responses, other error-related statuses
+   *     may be appropriate depending on the specific error scenario. Must not be null.
    * @param error comprehensive error information including structured error codes, human-readable
    *     descriptions, and optional native error text for diagnostic purposes. This parameter
    *     ensures that error responses always contain actionable information for client error
@@ -206,15 +206,15 @@ public class ApplicationErrorResponse extends BaseResponse {
    * @throws jakarta.validation.ConstraintViolationException if string parameters are empty or
    *     contain only whitespace characters
    * @see BaseResponse
-   * @see Error#getErrorDescription()
-   * @see Error#getErrorCode()
-   * @see Error#getNativeErrorText()
+   * @see ApplicationError#getErrorDescription()
+   * @see ApplicationError#getErrorCode()
+   * @see ApplicationError#getNativeErrorText()
    */
   public ApplicationErrorResponse(
       @NotBlank String clientId,
       @NotBlank String transactionId,
       @NotNull Status status,
-      @NotNull Error error) {
+      @NotNull ApplicationError error) {
     super(clientId, transactionId, status);
     this.setError(error);
   }

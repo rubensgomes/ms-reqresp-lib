@@ -15,7 +15,8 @@
  */
 package com.rubensgomes.msreqresplib;
 
-import com.rubensgomes.msreqresplib.error.Error;
+import com.rubensgomes.msbaselib.Status;
+import com.rubensgomes.msbaselib.error.ApplicationError;
 
 import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotBlank;
@@ -346,8 +347,8 @@ import lombok.extern.slf4j.Slf4j;
  *
  * @author Rubens Gomes
  * @since 0.0.1
- * @see Status
- * @see Error
+ * @see com.rubensgomes.msbaselib.Status
+ * @see com.rubensgomes.msbaselib.error.ApplicationError
  * @see BaseRequest
  * @see jakarta.validation.constraints.NotBlank
  * @see jakarta.validation.constraints.NotNull
@@ -368,7 +369,7 @@ public abstract class BaseResponse {
   private final Status status;
 
   /** Optional error details when the response indicates a failure status. */
-  @Nullable private Error error;
+  @Nullable private ApplicationError error;
 
   /** Logs the response details for debugging and tracing purposes. */
   public void logResponse() {

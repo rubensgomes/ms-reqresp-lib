@@ -52,7 +52,7 @@
  *       DTOs with client identification and correlation tracking
  *   <li>{@link com.rubensgomes.msreqresplib.BaseResponse} - Foundation for all response DTOs with
  *       status information and correlation tracking
- *   <li>{@link com.rubensgomes.msreqresplib.Status} - Standardized status enumeration for request
+ *   <li>{@link com.rubensgomes.msbaselib.Status} - Standardized status enumeration for request
  *       lifecycle management and operation outcomes
  * </ul>
  *
@@ -67,17 +67,13 @@
  *       response DTO with guaranteed error information and enhanced validation
  * </ul>
  *
- * <h4>{@link com.rubensgomes.msreqresplib.error}</h4>
+ * <h4>{@link com.rubensgomes.msbaselib.error}</h4>
  *
  * <p>Comprehensive error handling framework:
  *
  * <ul>
- *   <li>{@link com.rubensgomes.msreqresplib.error.ErrorCode} - Interface for standardized error
- *       code contracts and implementations
- *   <li>{@link com.rubensgomes.msreqresplib.error.Error} - Core interface for error data structures
- *       and comprehensive error reporting
- *   <li>{@link com.rubensgomes.msreqresplib.error.ApplicationError} - Concrete implementation of
- *       the Error interface with Lombok integration and hybrid immutability
+ *   <li>{@link com.rubensgomes.msbaselib.error.ApplicationError} - Concrete implementation of the
+ *       Error interface with Lombok integration and hybrid immutability
  * </ul>
  *
  * <h2>Key Features</h2>
@@ -394,8 +390,8 @@
  * @since 0.0.1
  * @see com.rubensgomes.msreqresplib.BaseRequest
  * @see com.rubensgomes.msreqresplib.BaseResponse
- * @see com.rubensgomes.msreqresplib.Status
+ * @see com.rubensgomes.msbaselib.Status
  * @see com.rubensgomes.msreqresplib.dto
- * @see com.rubensgomes.msreqresplib.error
+ * @see com.rubensgomes.msbaselib.error
  */
 package com.rubensgomes.msreqresplib;
