@@ -1,6 +1,10 @@
 # ms-reqresp-lib
 Base request and response types to be used by microservices.
 
+## AI General Disclaimer
+
+For **AI-GENERATED CONTENT**, please refer to [DISCLAIMER](DISCLAIMER.md)
+
 ## Display Java Tools Installed
 
 ```shell
