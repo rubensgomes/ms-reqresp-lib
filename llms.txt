@@ -1,0 +1,572 @@
+# ms-reqresp-lib - Microservices Request-Response Library
+
+> Base request and response types for enterprise microservices communication
+
+## Project Overview
+
+**Name**: ms-reqresp-lib
+**Group**: com.rubensgomes
+**Version**: 0.0.17-SNAPSHOT
+**License**: Apache License 2.0
+**Java Version**: 21 (Amazon Corretto)
+**Build Tool**: Gradle 9.1.0
+
+## Purpose
+
+This library provides a comprehensive framework for standardizing request and response handling across microservices architectures. It offers consistent data transfer objects (DTOs), error handling mechanisms, and status management to ensure uniform communication patterns throughout distributed systems.
+
+## Core Design Principles
+
+### 1. Immutability
+- All base classes implement immutable design patterns
+- Thread-safe by default
+- Reduces bugs through defensive programming
+- Supports functional programming paradigms
+- Enables safe object caching and reuse
+
+### 2. Distributed Tracing
+- Built-in correlation ID support
+- Client identification for service tracking
+- End-to-end transaction tracing
+- Seamless integration with Zipkin, Jaeger, OpenTelemetry
+
+### 3. Validation Framework
+- Jakarta Bean Validation integration
+- Runtime data integrity checks
+- Clear, actionable error messages
+- Type safety with strong typing
+
+### 4. Error Handling
+- Structured error responses
+- Standardized error codes
+- Comprehensive diagnostic information
+- Consistent error communication
+
+## Architecture
+
+### Package Structure
+
+```
+com.rubensgomes.msreqresplib/
+├── BaseRequest.java              # Abstract base for all request DTOs
+├── BaseResponse.java             # Abstract base for all response DTOs
+├── package-info.java             # Main package documentation
+└── dto/
+    ├── ApplicationErrorResponse.java  # Specialized error response DTO
+    └── package-info.java              # DTO package documentation
+```
+
+### Key Components
+
+#### 1. BaseRequest
+**Location**: `com.rubensgomes.msreqresplib.BaseRequest`
+
+Abstract foundation for all service request objects providing:
+- Client identification (`clientId`)
+- Transaction correlation tracking (`transactionId`)
+- Immutable design with final fields
+- Built-in logging support
+- Jakarta Bean Validation
+
+**Key Methods**:
+- `getClientId()`: Returns originating client/service identifier
+- `getTransactionId()`: Returns correlation ID for tracing
+- `logRequest()`: Logs request details for debugging
+
+**Usage Pattern**:
+```java
+@Data
+@EqualsAndHashCode(callSuper = true)
+public class UserCreateRequest extends BaseRequest {
+    @NotBlank(message = "Username is required")
+    private final String username;
+
+    @Email(message = "Valid email address is required")
+    private final String email;
+
+    public UserCreateRequest(String clientId, String transactionId,
+                            String username, String email) {
+        super(clientId, transactionId);
+        this.username = username;
+        this.email = email;
+    }
+}
+```
+
+#### 2. BaseResponse
+**Location**: `com.rubensgomes.msreqresplib.BaseResponse`
+
+Abstract foundation for all service response objects providing:
+- Client identification (inherited from request)
+- Transaction correlation (inherited from request)
+- Operation status (`Status` enum)
+- Optional error details (`ApplicationError`)
+- Hybrid immutability (core fields final, error mutable)
+- Built-in logging support
+
+**Key Methods**:
+- `getClientId()`: Returns client identifier
+- `getTransactionId()`: Returns correlation ID
+- `getStatus()`: Returns operation outcome status
+- `getError()`: Returns error details (if any)
+- `setError(ApplicationError)`: Sets error information
+- `logResponse()`: Logs response details for debugging
+
+**Status Values** (from `com.rubensgomes.msbaselib.Status`):
+- `SUCCESS`: Operation completed successfully
+- `ERROR`: Operation failed with error details
+- `PROCESSING`: Operation in progress (async)
+- `PARTIAL_SUCCESS`: Batch operation partially completed
+
+**Usage Pattern**:
+```java
+@Data
+@EqualsAndHashCode(callSuper = true)
+public class UserCreateResponse extends BaseResponse {
+    private final String userId;
+    private final String username;
+    private final Instant createdAt;
+
+    public UserCreateResponse(String clientId, String transactionId,
+                             Status status, String userId,
+                             String username, Instant createdAt) {
+        super(clientId, transactionId, status);
+        this.userId = userId;
+        this.username = username;
+        this.createdAt = createdAt;
+    }
+}
+```
+
+#### 3. ApplicationErrorResponse
+**Location**: `com.rubensgomes.msreqresplib.dto.ApplicationErrorResponse`
+
+Specialized response type for error scenarios that guarantees error information presence:
+- Extends `BaseResponse`
+- Enforces mandatory error information at construction
+- Enhanced validation constraints
+- Ensures consistent error reporting
+
+**Constructor**:
+```java
+public ApplicationErrorResponse(
+    @NotBlank String clientId,
+    @NotBlank String transactionId,
+    @NotNull Status status,
+    @NotNull ApplicationError error)
+```
+
+**Usage Pattern**:
+```java
+// Create error information
+ErrorCode errorCode = new DatabaseErrorCode("DB001", "Connection failed");
+ApplicationError error = new ApplicationError(
+    "Unable to connect to database",
+    errorCode
+);
+error.setNativeErrorText("Connection timeout after 30 seconds");
+
+// Create error response
+ApplicationErrorResponse response = new ApplicationErrorResponse(
+    "order-service",
+    "txn-12345",
+    Status.ERROR,
+    error
+);
+```
+
+## Dependencies
+
+### Runtime Dependencies
+- **Jakarta Bean Validation API**: Runtime validation support
+- **SLF4J API**: Logging abstraction
+- **Jakarta Annotations API**: Standard annotations
+- **ms-base-lib**: Base library with Status and ApplicationError
+
+### Compile-Only Dependencies
+- **Lombok**: Code generation (compile-time only)
+
+### Test Dependencies
+- **JUnit Jupiter**: Unit testing framework
+- **Mockito**: Mocking framework
+- **Logback**: Logging implementation
+- **Hibernate Validator**: Bean validation implementation
+
+## Integration Patterns
+
+### 1. Spring Boot REST Controller
+```java
+@RestController
+@RequestMapping("/api/users")
+public class UserController {
+
+    @PostMapping
+    public ResponseEntity<UserCreateResponse> createUser(
+            @Valid @RequestBody UserCreateRequest request) {
+
+        request.logRequest();
+
+        try {
+            User user = userService.createUser(request);
+
+            UserCreateResponse response = new UserCreateResponse(
+                request.getClientId(),
+                request.getTransactionId(),
+                Status.SUCCESS,
+                user.getId(),
+                user.getUsername(),
+                user.getCreatedAt()
+            );
+
+            response.logResponse();
+            return ResponseEntity.ok(response);
+
+        } catch (DuplicateUserException e) {
+            ApplicationError error = new ApplicationError(
+                e.getMessage(),
+                ApplicationErrorCodes.DUPLICATE_USER
+            );
+
+            ApplicationErrorResponse errorResponse =
+                new ApplicationErrorResponse(
+                    request.getClientId(),
+                    request.getTransactionId(),
+                    Status.ERROR,
+                    error
+                );
+
+            errorResponse.logResponse();
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                                .body(errorResponse);
+        }
+    }
+}
+```
+
+### 2. Distributed Tracing
+```java
+// API Gateway generates correlation ID
+String correlationId = UUID.randomUUID().toString();
+String clientId = "mobile-app-v1";
+
+// First service call
+UserCreateRequest request = new UserCreateRequest(
+    clientId,
+    correlationId,
+    "john.doe",
+    "john@example.com"
+);
+
+// Propagate to downstream services
+OrderCreateRequest orderRequest = new OrderCreateRequest(
+    clientId,
+    correlationId,  // Same correlation ID
+    userId,
+    orderDetails
+);
+```
+
+### 3. Microservices Error Propagation
+```java
+// Service A calls Service B
+try {
+    ServiceBResponse response = serviceBClient.call(request);
+
+    if (response.getStatus() == Status.ERROR) {
+        // Propagate error with context
+        ApplicationErrorResponse errorResponse =
+            new ApplicationErrorResponse(
+                request.getClientId(),
+                request.getTransactionId(),
+                Status.ERROR,
+                response.getError()
+            );
+        return errorResponse;
+    }
+
+} catch (Exception e) {
+    // Handle communication failures
+    ApplicationError error = new ApplicationError(
+        "Service B unavailable",
+        ApplicationErrorCodes.SERVICE_UNAVAILABLE
+    );
+    error.setNativeErrorText(e.getMessage());
+
+    return new ApplicationErrorResponse(
+        request.getClientId(),
+        request.getTransactionId(),
+        Status.ERROR,
+        error
+    );
+}
+```
+
+### 4. Asynchronous Processing
+```java
+// Initial response for long-running operation
+UserProcessingResponse asyncResponse = new UserProcessingResponse(
+    request.getClientId(),
+    request.getTransactionId(),
+    Status.PROCESSING,  // Operation in progress
+    taskId
+);
+
+return ResponseEntity.accepted().body(asyncResponse);
+
+// Later: completion notification
+UserProcessingResponse completionResponse = new UserProcessingResponse(
+    request.getClientId(),
+    request.getTransactionId(),
+    Status.SUCCESS,  // Operation completed
+    taskId,
+    result
+);
+```
+
+## Best Practices
+
+### Request/Response Design
+1. **Always extend base classes**: Use `BaseRequest` and `BaseResponse`
+2. **Immutable fields**: Declare all custom fields as `final`
+3. **Validation annotations**: Use Jakarta Bean Validation
+4. **Meaningful names**: Descriptive class and field names
+5. **Lombok integration**: Use `@Data` and `@EqualsAndHashCode(callSuper = true)`
+
+### Error Handling
+1. **Use ApplicationErrorResponse**: For guaranteed error information
+2. **Implement ErrorCode interface**: Create service-specific error codes
+3. **Provide comprehensive context**: Clear messages and diagnostics
+4. **Maintain correlation**: Always preserve transaction IDs
+5. **Structured error information**: Use `ApplicationError` for rich context
+
+### Status Management
+1. **Appropriate status values**: Match status to operation outcome
+2. **Lifecycle tracking**: Update status as operations progress
+3. **Async operations**: Use `Status.PROCESSING` for long-running tasks
+4. **Consistent mapping**: Map status to HTTP status codes appropriately
+
+### Logging and Monitoring
+1. **Response logging**: Use built-in `logResponse()` method
+2. **Transaction correlation**: Ensure transaction IDs are logged
+3. **Error tracking**: Log error responses with sufficient detail
+4. **Performance monitoring**: Track response times by transaction ID
+
+## Thread Safety
+
+### Immutable Core Fields
+- `clientId`, `transactionId`, `status` are immutable
+- Thread-safe for concurrent read access
+- No synchronization needed for reading
+
+### Mutable Optional Fields
+- `error` field in `BaseResponse` is mutable
+- Requires synchronization if shared across threads
+- Consider using builders for complex scenarios
+
+### Recommendations
+- Construct objects fully before sharing
+- Use defensive copying when necessary
+- Avoid modifying shared response objects
+
+## Performance Considerations
+
+### Benefits
+- **Object Caching**: Immutable objects can be safely cached
+- **Memory Efficiency**: Reduced garbage collection pressure
+- **CPU Cache Friendly**: Stable memory footprint
+- **No Synchronization**: Thread-safe without locks
+- **Lombok Optimization**: Generated code is optimized
+
+### Guidelines
+- Reuse immutable objects when possible
+- Avoid creating unnecessary intermediate objects
+- Use appropriate logging levels
+- Monitor transaction ID propagation overhead
+
+## Testing Support
+
+### Unit Testing
+```java
+@Test
+void testUserCreateRequest() {
+    UserCreateRequest request = new UserCreateRequest(
+        "test-client",
+        "test-txn-123",
+        "testuser",
+        "test@example.com"
+    );
+
+    assertEquals("test-client", request.getClientId());
+    assertEquals("test-txn-123", request.getTransactionId());
+    assertEquals("testuser", request.getUsername());
+}
+```
+
+### Validation Testing
+```java
+@Test
+void testRequestValidation() {
+    ValidatorFactory factory = Validation.buildDefaultValidatorFactory();
+    Validator validator = factory.getValidator();
+
+    UserCreateRequest invalidRequest = new UserCreateRequest(
+        "",  // Invalid: empty clientId
+        "txn-123",
+        "user",
+        "email@example.com"
+    );
+
+    Set<ConstraintViolation<UserCreateRequest>> violations =
+        validator.validate(invalidRequest);
+
+    assertFalse(violations.isEmpty());
+}
+```
+
+### Error Response Testing
+```java
+@Test
+void testErrorResponse() {
+    ErrorCode errorCode = TestErrorCode.TEST_ERROR;
+    ApplicationError error = new ApplicationError(
+        "Test error message",
+        errorCode
+    );
+
+    ApplicationErrorResponse response = new ApplicationErrorResponse(
+        "test-client",
+        "test-txn-456",
+        Status.ERROR,
+        error
+    );
+
+    assertNotNull(response.getError());
+    assertEquals(Status.ERROR, response.getStatus());
+    assertEquals("Test error message",
+                 response.getError().getErrorDescription());
+}
+```
+
+## Documentation
+
+### Javadocs
+Comprehensive HTML documentation is generated via Gradle:
+
+```bash
+./gradlew :lib:javadoc
+```
+
+**Output Location**: `lib/build/docs/javadoc/`
+
+**Access**: Open `lib/build/docs/javadoc/index.html` in a browser
+
+### Package Documentation
+- **Main Package**: Comprehensive overview in `package-info.java`
+- **DTO Package**: Specialized DTOs documentation in `dto/package-info.java`
+- **Class-Level**: Detailed Javadoc for all public classes
+- **Method-Level**: Complete documentation for all public methods
+
+### Key Documentation Sections
+1. Design principles and patterns
+2. Usage examples and code samples
+3. Integration patterns
+4. Best practices and guidelines
+5. Thread safety considerations
+6. Performance optimization tips
+
+## Build and Release
+
+### Build Commands
+```bash
+# Clean build
+./gradlew --info clean build
+
+# Run tests
+./gradlew --info test
+
+# Generate Javadocs
+./gradlew :lib:javadoc
+
+# Apply code formatting
+./gradlew :lib:spotlessApply
+
+# Create JAR
+./gradlew --info jar
+
+# Assemble artifacts
+./gradlew --info assemble
+```
+
+### Release Process
+```bash
+# Release (creates version tag and updates version)
+./gradlew --info release
+
+# Switch to release branch and publish
+git checkout release
+git pull
+./gradlew --info publish
+git checkout main
+```
+
+### Publishing
+- **Repository**: GitHub Packages Maven Repository
+- **Group ID**: com.rubensgomes
+- **Artifact ID**: ms-reqresp-lib
+- **Artifacts**: JAR, Sources JAR, Javadoc JAR
+
+## Related Projects
+
+### ms-base-lib
+Base library containing shared components:
+- `Status` enum for operation outcomes
+- `ApplicationError` class for error information
+- `ErrorCode` interface for error code implementations
+- Common utilities and base classes
+
+**Repository**: https://maven.pkg.github.com/rubensgomes/ms-base-lib
+
+## Version History
+
+### 0.0.17-SNAPSHOT (Current Development)
+- Ongoing enhancements and refinements
+- Documentation improvements
+
+### 0.0.16 (Latest Release)
+- Fixes and refactorings
+- Stability improvements
+
+### Earlier Versions
+See git tags for complete version history
+
+## Author
+
+**Rubens Gomes**
+- Email: rubens.s.gomes@gmail.com
+- Website: https://rubensgomes.com/
+- GitHub: @rubensgomes
+
+## License
+
+Apache License 2.0
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+## AI-Generated Content Disclaimer
+
+For information about AI-generated content in this project, please refer to [DISCLAIMER.md](DISCLAIMER.md)
+
+---
+
+**Last Updated**: 2025-10-13
+**Document Version**: 1.0.0
