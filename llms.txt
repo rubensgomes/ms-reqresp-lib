@@ -6,9 +6,9 @@
 
 **Name**: ms-reqresp-lib
 **Group**: com.rubensgomes
-**Version**: 0.0.17-SNAPSHOT
+**Version**: 0.0.18-SNAPSHOT
 **License**: Apache License 2.0
-**Java Version**: 21 (Amazon Corretto)
+**Java Version**: 25 (Amazon Corretto)
 **Build Tool**: Gradle 9.1.0
 
 ## Purpose
@@ -528,11 +528,11 @@ Base library containing shared components:
 
 ## Version History
 
-### 0.0.17-SNAPSHOT (Current Development)
+### 0.0.18-SNAPSHOT (Current Development)
 - Ongoing enhancements and refinements
 - Documentation improvements
 
-### 0.0.16 (Latest Release)
+### 0.0.17 (Latest Release)
 - Fixes and refactorings
 - Stability improvements
 
@@ -568,5 +568,5 @@ For information about AI-generated content in this project, please refer to [DIS
 
 ---
 
-**Last Updated**: 2025-10-13
+**Last Updated**: 2026-01-16
 **Document Version**: 1.0.0
