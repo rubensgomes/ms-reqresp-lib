@@ -1,23 +1,42 @@
 # ms-reqresp-lib
+
 Base request and response types to be used by microservices.
 
 ## AI General Disclaimer
 
 For **AI-GENERATED CONTENT**, please refer to [DISCLAIMER](DISCLAIMER.md)
 
-## Display Java Tools Installed
+## Branching Strategy
+
+The project is using two branches:
+
+1. **_main_**: which is used as the Trunk-Based Development (TBD) with tagging
+   for new releases.
+2. **_release_**: which contains the most recently released code. That is, every
+   time a release is made, this branch is updated.
+
+## CICD Automation
+
+The CI/CD build pipeline is using the GitHub Workflow Actions. The built
+artifact package is deployed to the following GitHub Package:
+
+- https://maven.pkg.github.com/rubensgomes/jvm-libs
+
+## Basic Commands
+
+- Display Java Tools Installed
 
 ```shell
 ./gradlew -q javaToolchains
 ```
 
-### Update the gradlew wrapper version
+-- Update the gradlew wrapper version
 
 ```bash
 ./gradlew wrapper --gradle-version=9.1.0 --distribution-type=bin
 ```
 
-## Clean, Build, Test, Assemble, Publish, Release
+- Clean, Build, Test, Assemble, Release, Publish
 
 ```bash
 ./gradlew --info clean
@@ -32,7 +51,7 @@ For **AI-GENERATED CONTENT**, please refer to [DISCLAIMER](DISCLAIMER.md)
 ```
 
 ```bash
-# --info is required for Grdle to display logs from tests
+# --info is required for Gradle to display logs from tests
 ./gradlew --info clean test
 ```
 
@@ -52,13 +71,6 @@ git push
 ```bash
 # only Rubens can release
 ./gradlew --info release
-```
-
-```bash
-git checkout release
-git pull
-./gradlew --info publish
-git checkout main
 ```
 
 ---
